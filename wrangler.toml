@@ -4,5 +4,5 @@ pages_build_output_dir = "."
 
 [[d1_databases]]
 binding = "DB"
-database_name = "liqaa"
-database_id = "REPLACE_WITH_YOUR_CLOUDFLARE_D1_DATABASE_ID"
+database_name = "liqaa25"
+database_id = "f605ba12-3585-4cd3-b5c5-85856cbb3e0a"
