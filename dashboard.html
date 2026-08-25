@@ -1,0 +1,655 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>الرئيسية — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .hero-greet { display: flex; flex-direction: column; gap: 6px; margin-bottom: var(--sp-4); }
+  .hero-greet h1 { font-size: clamp(26px, 3.4vw, 34px); font-weight: 900; letter-spacing: -.5px; }
+  .hero-greet p { color: var(--muted); font-size: 16.5px; }
+
+  .action-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: var(--sp-5); }
+  .action-row .btn { min-width: 190px; }
+
+  .quick-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: var(--sp-5); }
+  .quick-card {
+    display: flex; align-items: flex-start; gap: 13px; text-align: start;
+    padding: 18px; border-radius: var(--r-lg); background: var(--card);
+    border: 1px solid var(--border); text-decoration: none; color: var(--text);
+    font-family: inherit; cursor: pointer; width: 100%;
+    transition: border-color var(--t-mid) var(--ease), box-shadow var(--t-mid) var(--ease), transform var(--t-mid) var(--ease);
+  }
+  .quick-card:hover { border-color: var(--border-strong); box-shadow: var(--shadow-md); transform: translateY(-2px); }
+  .quick-card .qi {
+    width: 42px; height: 42px; border-radius: 12px; display: grid; place-items: center;
+    background: var(--tint); color: var(--c1); flex: none;
+  }
+  .quick-card .qi svg { width: 20px; height: 20px; }
+  .quick-card b { display: block; font-size: 15.5px; margin-bottom: 3px; }
+  .quick-card span { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  .code-box {
+    display: flex; align-items: center; gap: 10px; padding: 12px 14px;
+    border-radius: var(--r-md); background: var(--glass); border: 1px dashed var(--border-strong);
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 14px;
+    word-break: break-all; direction: ltr; text-align: left;
+  }
+  .code-box .lk { flex: 1; min-width: 0; }
+  .big-code {
+    font-size: 30px; font-weight: 900; letter-spacing: 5px; text-align: center;
+    direction: ltr; color: var(--c1); font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+  .dl-list { display: grid; gap: 10px; }
+  .dl-list div { display: flex; justify-content: space-between; gap: 14px; font-size: 14.5px; }
+  .dl-list dt { color: var(--muted); }
+  .dl-list dd { font-weight: 700; text-align: end; }
+  @media (max-width: 900px) { .quick-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .action-row .btn { min-width: 0; flex: 1 1 100%; } }
+</style>
+</head>
+<body class="app">
+<div id="appShell"></div>
+
+<main id="main">
+  <div class="container wide page">
+
+    <section class="hero-greet anim-in">
+      <h1 id="greetLine">أهلًا بعودتك 👋</h1>
+      <p id="greetSub">جاهز تبدأ اجتماعك؟</p>
+    </section>
+
+    <div class="action-row anim-in">
+      <button class="btn btn-primary btn-lg" id="newMeetingBtn" type="button">
+        <span class="ic-slot" data-icon="plus"></span><span data-i18n="newMeeting">اجتماع جديد</span>
+      </button>
+      <button class="btn btn-secondary btn-lg" id="joinMeetingBtn" type="button">
+        <span class="ic-slot" data-icon="video"></span><span data-i18n="joinMeeting">انضمام لاجتماع</span>
+      </button>
+    </div>
+
+    <!-- Recent meetings -->
+    <section class="stack g3">
+      <div class="section-head">
+        <h2 data-i18n="recentTitle">اجتماعاتك الأخيرة</h2>
+        <a class="btn btn-ghost btn-sm" href="meetings.html" data-i18n="viewAll">عرض الكل</a>
+      </div>
+      <div class="card flush" id="recentCard">
+        <div class="mtg-list" id="recentList">
+          <div class="skel skel-row" style="margin:10px"></div>
+          <div class="skel skel-row" style="margin:10px"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Quick links -->
+    <div class="quick-grid">
+      <a class="quick-card" href="contacts.html">
+        <span class="qi" data-icon="users"></span>
+        <span><b data-i18n="qcContacts">جهات الاتصال</b><span data-i18n="qcContactsSub">ابدأ اجتماع مع شخص من قائمتك</span></span>
+      </a>
+      <a class="quick-card" href="chats.html">
+        <span class="qi" data-icon="chat"></span>
+        <span><b data-i18n="qcChats">المحادثات</b><span data-i18n="qcChatsSub">ابدأ محادثة جديدة وتابع رسائلك</span></span>
+      </a>
+      <a class="quick-card" href="help.html">
+        <span class="qi" data-icon="help"></span>
+        <span><b data-i18n="qcHelp">المساعدة والدعم</b><span data-i18n="qcHelpSub">أسئلة شائعة وطرق التواصل</span></span>
+      </a>
+    </div>
+  </div>
+</main>
+
+<!-- ============ Create meeting modal ============ -->
+<div class="modal-scrim" id="createModal" role="dialog" aria-modal="true" aria-labelledby="createTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="createTitle" data-i18n="cmTitle">اجتماع جديد</h2>
+        <p data-i18n="cmSub">اضبط تفاصيل الاجتماع قبل ما تبدأ</p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+
+    <form id="createForm" class="modal-body" novalidate>
+      <div class="field">
+        <label class="label" for="cmName" data-i18n="cmNameL">اسم الاجتماع</label>
+        <input class="input" id="cmName" maxlength="60" data-i18n-ph="cmNamePh" placeholder="مثال: اجتماع الفريق الأسبوعي" data-autofocus>
+        <p class="err-msg" id="cmNameErr"></p>
+      </div>
+
+      <label class="check">
+        <input type="checkbox" id="cmReqPass">
+        <span class="check-body">
+          <b data-i18n="cmReqPass">طلب كلمة مرور للدخول</b>
+          <span class="hint" data-i18n="cmReqPassHint">المشاركين هيحتاجوا يكتبوا كلمة المرور قبل الانضمام</span>
+        </span>
+      </label>
+
+      <div class="field" id="cmPassField" hidden>
+        <label class="label" for="cmPass" data-i18n="cmPassL">كلمة مرور الاجتماع</label>
+        <input class="input" id="cmPass" maxlength="40" data-i18n-ph="cmPassPh" placeholder="اكتب كلمة مرور">
+        <p class="err-msg" id="cmPassErr"></p>
+      </div>
+
+      <div class="opt-grid">
+        <label class="check">
+          <input type="checkbox" id="cmRec" checked>
+          <span class="check-body">
+            <b data-i18n="cmRec">السماح بالتسجيل</b>
+            <span class="hint" data-i18n="cmRecHint">تسجيل محلي على جهازك فقط</span>
+          </span>
+        </label>
+        <label class="check">
+          <input type="checkbox" id="cmAI">
+          <span class="check-body">
+            <b data-i18n="cmAI">تفعيل مميزات الذكاء الاصطناعي</b>
+            <span class="hint" data-i18n="cmAIHint">التفريغ النصي والملخص داخل الاجتماع</span>
+          </span>
+        </label>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-primary" type="submit" id="cmCreate" data-i18n="cmCreate">إنشاء الاجتماع</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Created / link modal ============ -->
+<div class="modal-scrim" id="linkModal" role="dialog" aria-modal="true" aria-labelledby="linkTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="linkTitle" data-i18n="lkTitle">تم إنشاء الاجتماع</h2>
+        <p data-i18n="lkSub">شارك الرابط أو الكود مع اللي عايز ينضم</p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+    <div class="modal-body">
+      <p class="big-code" id="lkCode">—</p>
+      <div class="code-box">
+        <span class="lk" id="lkLink">—</span>
+        <button class="btn btn-secondary btn-sm" type="button" id="lkCopy" data-i18n="copy">نسخ</button>
+      </div>
+      <p class="hint" id="lkPassNote" hidden></p>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="lkLater">لاحقًا</button>
+        <button class="btn btn-primary" type="button" id="lkStart" data-i18n="lkStart">ابدأ الاجتماع</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ Join meeting modal ============ -->
+<div class="modal-scrim" id="joinModal" role="dialog" aria-modal="true" aria-labelledby="joinTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="joinTitle" data-i18n="jmTitle">انضمام لاجتماع</h2>
+        <p data-i18n="jmSub">اكتب كود الاجتماع أو الصق الرابط</p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+
+    <form id="joinForm" class="modal-body" novalidate>
+      <div class="field" id="jmCodeField">
+        <label class="label" for="jmCode" data-i18n="jmCodeL">كود أو رابط الاجتماع</label>
+        <input class="input" id="jmCode" dir="ltr" data-i18n-ph="jmCodePh" placeholder="ABC123" data-autofocus autocomplete="off">
+        <p class="err-msg" id="jmErr"></p>
+      </div>
+
+      <div class="field" id="jmPassField" hidden>
+        <label class="label" for="jmPass" data-i18n="jmPassL">كلمة مرور الاجتماع</label>
+        <div class="input-group">
+          <input class="input" type="password" id="jmPass" autocomplete="off" data-i18n-ph="jmPassPh" placeholder="••••••••">
+          <button class="in-btn" type="button" id="jmEye" data-i18n-aria="showPass" aria-label="إظهار كلمة المرور"></button>
+        </div>
+        <p class="hint" data-i18n="jmPassHint">الاجتماع ده محمي بكلمة مرور</p>
+        <p class="err-msg" id="jmPassErr"></p>
+      </div>
+
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-primary" type="submit" id="jmGo" data-i18n="jmGo">انضمام</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ============ Details modal ============ -->
+<div class="modal-scrim" id="detailsModal" role="dialog" aria-modal="true" aria-labelledby="dtTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="dtTitle" data-i18n="dtTitle">تفاصيل الاجتماع</h2>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+    <div class="modal-body">
+      <dl class="dl-list" id="dtBody"></dl>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="close">إغلاق</button>
+        <button class="btn btn-primary" type="button" id="dtJoin" data-i18n="join">انضمام</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import {
+  createMeeting, getMeetings, deleteMeeting, findMeeting,
+  parseMeetingCode, meetingLink, displayName as coreName
+} from './liqaa-core.js';
+
+const DICT = {
+  ar: {
+    docTitle: "الرئيسية — لقاء",
+    greeting: "أهلا",
+    greetSub: "جاهز تبدأ اجتماعك؟",
+    welcomeBack: "أهلًا بعودتك 👋",
+    newMeeting: "اجتماع جديد", joinMeeting: "انضمام لاجتماع",
+    recentTitle: "اجتماعاتك الأخيرة", viewAll: "عرض الكل",
+    emptyTitle: "لسه مفيش اجتماعات", emptySub: "ابدأ اجتماعك الأول وهيظهر هنا عشان ترجعله بسرعة.",
+    emptyBtn: "ابدأ اجتماع جديد",
+    qcContacts: "جهات الاتصال", qcContactsSub: "ابدأ اجتماع مع شخص من قائمتك",
+    qcChats: "المحادثات", qcChatsSub: "ابدأ محادثة جديدة وتابع رسائلك",
+    qcHelp: "المساعدة والدعم", qcHelpSub: "أسئلة شائعة وطرق التواصل",
+    cmTitle: "اجتماع جديد", cmSub: "اضبط تفاصيل الاجتماع قبل ما تبدأ",
+    cmNameL: "اسم الاجتماع", cmNamePh: "مثال: اجتماع الفريق الأسبوعي",
+    cmReqPass: "طلب كلمة مرور للدخول", cmReqPassHint: "المشاركين هيحتاجوا يكتبوا كلمة المرور قبل الانضمام",
+    cmPassL: "كلمة مرور الاجتماع", cmPassPh: "اكتب كلمة مرور",
+    cmRec: "السماح بالتسجيل", cmRecHint: "تسجيل محلي على جهازك فقط",
+    cmAI: "تفعيل مميزات الذكاء الاصطناعي", cmAIHint: "التفريغ النصي والملخص داخل الاجتماع",
+    cmCreate: "إنشاء الاجتماع", cmCreating: "جارٍ الإنشاء…",
+    errName: "اكتب اسمًا للاجتماع", errPass: "اكتب كلمة مرور أو ألغِ الخيار",
+    lkTitle: "تم إنشاء الاجتماع", lkSub: "شارك الرابط أو الكود مع اللي عايز ينضم",
+    lkLater: "لاحقًا", lkStart: "ابدأ الاجتماع",
+    lkPassNote: "الاجتماع محمي بكلمة مرور — متنساش تبعتها للمشاركين.",
+    copy: "نسخ", copied: "تم نسخ الرابط",
+    jmTitle: "انضمام لاجتماع", jmSub: "اكتب كود الاجتماع أو الصق الرابط",
+    jmCodeL: "كود أو رابط الاجتماع", jmCodePh: "ABC123",
+    jmPassL: "كلمة مرور الاجتماع", jmPassPh: "••••••••",
+    jmPassHint: "الاجتماع ده محمي بكلمة مرور",
+    jmGo: "انضمام", jmChecking: "جارٍ التحقق…",
+    errNeedCode: "اكتب كود الاجتماع أو الصق الرابط",
+    errNotFound: "مفيش اجتماع بالكود ده — راجع الكود وحاول تاني",
+    errLocked: "الاجتماع مقفول من المضيف دلوقتي",
+    errWrongPass: "كلمة المرور غير صحيحة",
+    errNeedPass: "اكتب كلمة مرور الاجتماع",
+    dtTitle: "تفاصيل الاجتماع",
+    dName: "الاسم", dCode: "الكود", dCreated: "أُنشئ في", dLast: "آخر انضمام",
+    dPass: "كلمة المرور", dRec: "التسجيل", dAI: "الذكاء الاصطناعي",
+    yes: "مفعّل", no: "متوقف", protectedTxt: "محمي", openTxt: "بدون كلمة مرور", never: "لسه ما انضمّتش",
+    mJoin: "انضمام", mCopy: "نسخ الرابط", mDetails: "عرض التفاصيل", mDelete: "حذف من السجل",
+    delTitle: "حذف الاجتماع من السجل؟",
+    delMsg: "هيتشال من قائمة اجتماعاتك على الجهاز ده. الرابط نفسه هيفضل شغال لو حد عنده الكود.",
+    delYes: "حذف", deleted: "تم حذف الاجتماع من السجل",
+    showPass: "إظهار كلمة المرور", hidePass: "إخفاء كلمة المرور",
+    close: "إغلاق", cancel: "إلغاء", join: "انضمام", more: "خيارات أكثر"
+  },
+  en: {
+    docTitle: "Home — Liqaa",
+    greeting: "Hi",
+    greetSub: "Ready to connect?",
+    welcomeBack: "Welcome back 👋",
+    newMeeting: "New meeting", joinMeeting: "Join meeting",
+    recentTitle: "Recent meetings", viewAll: "View all",
+    emptyTitle: "No meetings yet", emptySub: "Start your first meeting and it will show up here for quick access.",
+    emptyBtn: "Start a new meeting",
+    qcContacts: "Contacts", qcContactsSub: "Start a meeting with someone on your list",
+    qcChats: "Chats", qcChatsSub: "Start a new conversation and follow your messages",
+    qcHelp: "Help & support", qcHelpSub: "FAQs and ways to reach us",
+    cmTitle: "New meeting", cmSub: "Set up the details before you start",
+    cmNameL: "Meeting name", cmNamePh: "e.g. Weekly team sync",
+    cmReqPass: "Require a password to join", cmReqPassHint: "Participants will need to enter it before joining",
+    cmPassL: "Meeting password", cmPassPh: "Enter a password",
+    cmRec: "Allow recording", cmRecHint: "Local recording on your own device only",
+    cmAI: "Enable AI features", cmAIHint: "In-meeting transcription and summary",
+    cmCreate: "Create meeting", cmCreating: "Creating…",
+    errName: "Give your meeting a name", errPass: "Enter a password or turn the option off",
+    lkTitle: "Meeting created", lkSub: "Share the link or code with your participants",
+    lkLater: "Later", lkStart: "Start meeting",
+    lkPassNote: "This meeting is password protected — remember to share the password too.",
+    copy: "Copy", copied: "Link copied",
+    jmTitle: "Join a meeting", jmSub: "Enter the meeting code or paste the link",
+    jmCodeL: "Meeting code or link", jmCodePh: "ABC123",
+    jmPassL: "Meeting password", jmPassPh: "••••••••",
+    jmPassHint: "This meeting is password protected",
+    jmGo: "Join", jmChecking: "Checking…",
+    errNeedCode: "Enter a meeting code or paste a link",
+    errNotFound: "No meeting found with that code — check it and try again",
+    errLocked: "The host has locked this meeting right now",
+    errWrongPass: "Incorrect password",
+    errNeedPass: "Enter the meeting password",
+    dtTitle: "Meeting details",
+    dName: "Name", dCode: "Code", dCreated: "Created", dLast: "Last joined",
+    dPass: "Password", dRec: "Recording", dAI: "AI features",
+    yes: "On", no: "Off", protectedTxt: "Protected", openTxt: "No password", never: "Not joined yet",
+    mJoin: "Join", mCopy: "Copy link", mDetails: "View details", mDelete: "Delete from history",
+    delTitle: "Delete this meeting from your history?",
+    delMsg: "It will be removed from your list on this device. The link keeps working for anyone who has the code.",
+    delYes: "Delete", deleted: "Meeting removed from history",
+    showPass: "Show password", hidePass: "Hide password",
+    close: "Close", cancel: "Cancel", join: "Join", more: "More options"
+  }
+};
+
+if (!Liqaa.boot({ dict: DICT, requireAuth: true, active: 'home' })) await new Promise(() => {}); // requireAuth is navigating away — halt this module quietly
+
+const $ = (id) => document.getElementById(id);
+const T = (k, v) => Liqaa.t(k, v);
+
+/* ---------- icon slots ---------- */
+function paintIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = Liqaa.icon(el.getAttribute('data-icon')); });
+  document.querySelectorAll('[data-close].modal-close').forEach(b => { b.innerHTML = Liqaa.icon('close'); });
+}
+paintIcons();
+
+/* ---------- greeting ---------- */
+function paintGreeting() {
+  const u = Liqaa.currentUser();
+  const name = u ? (u.firstName || Liqaa.displayName(u)) : '';
+  const ar = Liqaa.lang() === 'ar';
+  $('greetLine').textContent = name
+    ? (ar ? `${T('greeting')}، ${name} 👋` : `${T('greeting')} | ${name} 👋`)
+    : `${T('greeting')} 👋`;
+  $('greetSub').textContent = T('greetSub');
+}
+
+/* ---------- password eye ---------- */
+(function () {
+  const btn = $('jmEye'), input = $('jmPass');
+  function paint() {
+    const showing = input.type === 'text';
+    btn.innerHTML = Liqaa.icon(showing ? 'eyeOff' : 'eye');
+    btn.setAttribute('aria-label', T(showing ? 'hidePass' : 'showPass'));
+  }
+  paint();
+  btn.addEventListener('click', () => { input.type = input.type === 'password' ? 'text' : 'password'; paint(); });
+  document.addEventListener('liqaa:lang', paint);
+})();
+
+/* ---------- recent meetings ---------- */
+function meetingInitial(m) {
+  const n = (m.name || '').trim();
+  return n ? n[0].toUpperCase() : (m.code || '?')[0];
+}
+
+function renderRecent() {
+  const list = getMeetings().slice().sort((a, b) =>
+    (b.lastJoinedAt || b.createdAt || 0) - (a.lastJoinedAt || a.createdAt || 0)
+  ).slice(0, 2);
+
+  const host = $('recentList');
+  const card = $('recentCard');
+
+  if (!list.length) {
+    card.classList.remove('flush');
+    host.innerHTML =
+      '<div class="empty">' +
+        '<span class="empty-art">' + Liqaa.icon('video') + '</span>' +
+        '<h3>' + Liqaa.escapeHtml(T('emptyTitle')) + '</h3>' +
+        '<p>' + Liqaa.escapeHtml(T('emptySub')) + '</p>' +
+        '<button class="btn btn-primary" type="button" id="emptyNew">' + Liqaa.icon('plus') +
+          '<span>' + Liqaa.escapeHtml(T('emptyBtn')) + '</span></button>' +
+      '</div>';
+    $('emptyNew').addEventListener('click', openCreate);
+    return;
+  }
+
+  card.classList.add('flush');
+  host.innerHTML = list.map((m, i) => {
+    const when = m.lastJoinedAt || m.createdAt || 0;
+    return '' +
+    '<div class="mtg-row" data-code="' + Liqaa.escapeHtml(m.code) + '">' +
+      '<span class="mtg-thumb">' + Liqaa.escapeHtml(meetingInitial(m)) + '</span>' +
+      '<span class="mtg-info">' +
+        '<span class="mtg-name">' + Liqaa.escapeHtml(m.name || m.code) + '</span>' +
+        '<span class="mtg-meta">' +
+          '<span dir="ltr">' + Liqaa.escapeHtml(m.code) + '</span>' +
+          '<span class="sep">•</span><span>' + Liqaa.escapeHtml(when ? Liqaa.fmtDateTime(when) : T('never')) + '</span>' +
+          (m.requirePassword ? '<span class="badge neutral">' + Liqaa.icon('lock') + T('protectedTxt') + '</span>' : '') +
+        '</span>' +
+      '</span>' +
+      '<span class="mtg-actions">' +
+        '<button class="btn btn-secondary btn-sm" type="button" data-act="join">' + Liqaa.escapeHtml(T('mJoin')) + '</button>' +
+        '<span class="menu-wrap">' +
+          '<button class="icon-btn" type="button" id="rowMore' + i + '" title="' + Liqaa.escapeHtml(T('more')) + '" aria-label="' + Liqaa.escapeHtml(T('more')) + '">' + Liqaa.icon('more') + '</button>' +
+          '<div class="menu" id="rowMenu' + i + '" role="menu">' +
+            '<button class="menu-item" type="button" data-act="join" role="menuitem">' + Liqaa.icon('video') + '<span>' + Liqaa.escapeHtml(T('mJoin')) + '</span></button>' +
+            '<button class="menu-item" type="button" data-act="copy" role="menuitem">' + Liqaa.icon('link') + '<span>' + Liqaa.escapeHtml(T('mCopy')) + '</span></button>' +
+            '<button class="menu-item" type="button" data-act="details" role="menuitem">' + Liqaa.icon('info') + '<span>' + Liqaa.escapeHtml(T('mDetails')) + '</span></button>' +
+            '<div class="menu-sep"></div>' +
+            '<button class="menu-item danger" type="button" data-act="delete" role="menuitem">' + Liqaa.icon('trash') + '<span>' + Liqaa.escapeHtml(T('mDelete')) + '</span></button>' +
+          '</div>' +
+        '</span>' +
+      '</span>' +
+    '</div>';
+  }).join('');
+
+  list.forEach((m, i) => Liqaa.bindMenu('rowMore' + i, 'rowMenu' + i));
+
+  host.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const row = btn.closest('.mtg-row');
+      const code = row.getAttribute('data-code');
+      const m = findMeeting(code);
+      Liqaa.closeAllMenus();
+      if (!m) { Liqaa.toast(T('errNotFound'), 'error'); renderRecent(); return; }
+
+      switch (btn.getAttribute('data-act')) {
+        case 'join':
+          location.href = 'prejoin.html?room=' + encodeURIComponent(m.code);
+          break;
+        case 'copy':
+          Liqaa.copyText(meetingLink(m.code)).then(ok => Liqaa.toast(ok ? T('copied') : T('somethingWrong'), ok ? 'ok' : 'error'));
+          break;
+        case 'details':
+          showDetails(m);
+          break;
+        case 'delete': {
+          const ok = await Liqaa.confirm({
+            title: T('delTitle'), message: T('delMsg'),
+            confirmText: T('delYes'), cancelText: T('cancel'), danger: true
+          });
+          if (ok) { deleteMeeting(m.code); renderRecent(); Liqaa.toast(T('deleted'), 'ok'); }
+          break;
+        }
+      }
+    });
+  });
+}
+
+/* ---------- details ---------- */
+let detailsCode = '';
+function showDetails(m) {
+  detailsCode = m.code;
+  const rows = [
+    [T('dName'), m.name || m.code],
+    [T('dCode'), m.code],
+    [T('dCreated'), m.createdAt ? Liqaa.fmtDateTime(m.createdAt) : '—'],
+    [T('dLast'), m.lastJoinedAt ? Liqaa.fmtDateTime(m.lastJoinedAt) : T('never')],
+    [T('dPass'), m.requirePassword ? T('protectedTxt') : T('openTxt')],
+    [T('dRec'), m.allowRecording ? T('yes') : T('no')],
+    [T('dAI'), m.aiEnabled ? T('yes') : T('no')]
+  ];
+  $('dtBody').innerHTML = rows.map(r =>
+    '<div><dt>' + Liqaa.escapeHtml(r[0]) + '</dt><dd>' + Liqaa.escapeHtml(String(r[1])) + '</dd></div>'
+  ).join('');
+  Liqaa.openModal($('detailsModal'));
+}
+$('dtJoin').addEventListener('click', () => {
+  if (detailsCode) location.href = 'prejoin.html?room=' + encodeURIComponent(detailsCode);
+});
+
+/* ---------- create meeting ---------- */
+function openCreate() {
+  $('createForm').reset();
+  $('cmPassField').hidden = true;
+  $('cmNameErr').classList.remove('show');
+  $('cmPassErr').classList.remove('show');
+  $('cmName').classList.remove('err');
+  $('cmPass').classList.remove('err');
+  const u = Liqaa.currentUser();
+  const who = u ? (u.firstName || Liqaa.displayName(u)) : '';
+  $('cmName').value = who ? (Liqaa.lang() === 'ar' ? 'اجتماع ' + who : who + "'s meeting") : '';
+  Liqaa.openModal($('createModal'));
+}
+$('newMeetingBtn').addEventListener('click', openCreate);
+
+$('cmReqPass').addEventListener('change', (e) => {
+  $('cmPassField').hidden = !e.target.checked;
+  if (e.target.checked) setTimeout(() => $('cmPass').focus(), 60);
+});
+
+function fieldErr(errEl, inputEl, msg) {
+  errEl.innerHTML = Liqaa.icon('alert') + '<span>' + Liqaa.escapeHtml(msg) + '</span>';
+  errEl.classList.add('show');
+  if (inputEl) inputEl.classList.add('err');
+}
+['cmName', 'cmPass', 'jmCode', 'jmPass'].forEach(id => {
+  $(id).addEventListener('input', () => {
+    $(id).classList.remove('err');
+    const map = { cmName: 'cmNameErr', cmPass: 'cmPassErr', jmCode: 'jmErr', jmPass: 'jmPassErr' };
+    $(map[id]).classList.remove('show');
+  });
+});
+
+$('createForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('cmCreate');
+  if (btn.disabled) return;
+  $('cmNameErr').classList.remove('show'); $('cmName').classList.remove('err');
+  $('cmPassErr').classList.remove('show'); $('cmPass').classList.remove('err');
+
+  const name = $('cmName').value.trim();
+  if (!name) { fieldErr($('cmNameErr'), $('cmName'), T('errName')); $('cmName').focus(); return; }
+  const reqPass = $('cmReqPass').checked;
+  const pass = $('cmPass').value.trim();
+  if (reqPass && !pass) { fieldErr($('cmPassErr'), $('cmPass'), T('errPass')); $('cmPass').focus(); return; }
+
+  Liqaa.setLoading(btn, true, T('cmCreating'));
+  setTimeout(() => {
+    const u = Liqaa.currentUser() || {};
+    const rec = createMeeting({
+      name,
+      requirePassword: reqPass,
+      password: pass,
+      allowRecording: $('cmRec').checked,
+      aiEnabled: $('cmAI').checked,
+      host: u.email || ''
+    });
+    Liqaa.setLoading(btn, false);
+    Liqaa.closeModal($('createModal'));
+    renderRecent();
+
+    createdCode = rec.code;
+    $('lkCode').textContent = rec.code;
+    $('lkLink').textContent = meetingLink(rec.code);
+    $('lkPassNote').hidden = !rec.requirePassword;
+    $('lkPassNote').textContent = T('lkPassNote');
+    setTimeout(() => Liqaa.openModal($('linkModal')), 240);
+  }, 620);
+});
+
+let createdCode = '';
+$('lkCopy').addEventListener('click', () => {
+  Liqaa.copyText(meetingLink(createdCode)).then(ok => Liqaa.toast(ok ? T('copied') : T('somethingWrong'), ok ? 'ok' : 'error'));
+});
+$('lkStart').addEventListener('click', () => {
+  if (createdCode) location.href = 'prejoin.html?room=' + encodeURIComponent(createdCode);
+});
+
+/* ---------- join meeting ---------- */
+let pendingMeeting = null;
+function openJoin(prefill) {
+  $('joinForm').reset();
+  pendingMeeting = null;
+  $('jmPassField').hidden = true;
+  $('jmCodeField').hidden = false;
+  $('jmErr').classList.remove('show');
+  $('jmPassErr').classList.remove('show');
+  $('jmCode').classList.remove('err');
+  $('jmGo').textContent = T('jmGo');
+  if (prefill) $('jmCode').value = prefill;
+  Liqaa.openModal($('joinModal'));
+}
+$('joinMeetingBtn').addEventListener('click', () => openJoin(''));
+
+$('joinForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('jmGo');
+  if (btn.disabled) return;
+
+  // step 2: password
+  if (pendingMeeting) {
+    $('jmPassErr').classList.remove('show'); $('jmPass').classList.remove('err');
+    const val = $('jmPass').value.trim();
+    if (!val) { fieldErr($('jmPassErr'), $('jmPass'), T('errNeedPass')); return; }
+    Liqaa.setLoading(btn, true, T('jmChecking'));
+    setTimeout(() => {
+      Liqaa.setLoading(btn, false);
+      if (val !== String(pendingMeeting.password)) {
+        fieldErr($('jmPassErr'), $('jmPass'), T('errWrongPass'));
+        return;
+      }
+      sessionStorage.setItem('liqaa_pass_ok_' + pendingMeeting.code, '1');
+      location.href = 'prejoin.html?room=' + encodeURIComponent(pendingMeeting.code);
+    }, 500);
+    return;
+  }
+
+  // step 1: code
+  $('jmErr').classList.remove('show'); $('jmCode').classList.remove('err');
+  const code = parseMeetingCode($('jmCode').value);
+  if (!code) { fieldErr($('jmErr'), $('jmCode'), T('errNeedCode')); $('jmCode').focus(); return; }
+
+  Liqaa.setLoading(btn, true, T('jmChecking'));
+  setTimeout(() => {
+    Liqaa.setLoading(btn, false);
+    const m = findMeeting(code);
+    if (!m) { fieldErr($('jmErr'), $('jmCode'), T('errNotFound')); return; }
+    if (m.locked) { fieldErr($('jmErr'), $('jmCode'), T('errLocked')); return; }
+    if (m.requirePassword && m.password) {
+      pendingMeeting = m;
+      $('jmCodeField').hidden = true;
+      $('jmPassField').hidden = false;
+      btn.textContent = T('jmGo');
+      setTimeout(() => $('jmPass').focus(), 60);
+      return;
+    }
+    location.href = 'prejoin.html?room=' + encodeURIComponent(m.code);
+  }, 550);
+});
+
+/* ---------- language re-render ---------- */
+document.addEventListener('liqaa:lang', () => {
+  paintGreeting();
+  renderRecent();
+  paintIcons();
+});
+
+/* ---------- init ---------- */
+paintGreeting();
+setTimeout(renderRecent, 200);
+
+// deep link: dashboard.html?join=CODE
+try {
+  const j = new URLSearchParams(location.search).get('join');
+  if (j) setTimeout(() => openJoin(j), 350);
+} catch (e) {}
+</script>
+</body>
+</html>

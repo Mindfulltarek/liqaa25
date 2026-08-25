@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>قبل الدخول — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css?v=prejoin-clean-1">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .pj-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, .85fr); gap: var(--sp-4); align-items: start; }
+  /* Video preview must stay completely clean: no decorative background layers. */
+  body.prejoin::before, body.prejoin::after { content: none !important; display: none !important; background: none !important; animation: none !important; }
+  .stage {
+    position: relative; width: 100%; aspect-ratio: 16/9; border-radius: var(--r-xl);
+    overflow: hidden; background: #0B0907; border: 1px solid var(--border);
+    display: grid; place-items: center;
+  }
+  .stage video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); display: block; }
+  .stage .off-state {
+    position: absolute; inset: 0; display: none; flex-direction: column; gap: 12px;
+    align-items: center; justify-content: center; color: #cfc7bd; text-align: center; padding: 20px;
+  }
+  .stage.cam-off .off-state { display: flex; }
+  .stage.cam-off video { visibility: hidden; }
+  .stage .off-state .avatar { width: 86px; height: 86px; font-size: 32px; }
+  .stage-bar {
+    position: absolute; inset-inline: 0; bottom: 0; padding: 14px;
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    background: linear-gradient(to top, rgba(0,0,0,.65), transparent);
+  }
+  .ctl {
+    width: 50px; height: 50px; border-radius: 50%; border: 1px solid rgba(255,255,255,.18);
+    background: rgba(24,18,13,.72); color: #fff; display: grid; place-items: center; cursor: pointer;
+    transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease), border-color var(--t-fast) var(--ease);
+  }
+  .ctl svg { width: 21px; height: 21px; }
+  .ctl:hover { background: rgba(40,30,22,.9); }
+  .ctl:active { transform: scale(.94); }
+  .ctl.off { background: var(--danger); border-color: transparent; }
+  .lvl { display: flex; align-items: center; gap: 9px; }
+  .lvl > span:first-child { flex: none; color: var(--muted); }
+  .lvl svg { width: 18px; height: 18px; display: block; }
+  .meter { flex: 1; height: 7px; border-radius: 99px; background: var(--glass); overflow: hidden; border: 1px solid var(--border); }
+  .meter i { display: block; height: 100%; width: 0%; background: var(--grad); transition: width 90ms linear; }
+  .mtg-title { font-size: 21px; font-weight: 900; }
+  .pj-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: var(--sp-4); }
+  @media (max-width: 980px) { .pj-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body class="app prejoin">
+<div id="appShell"></div>
+
+<main id="main">
+  <div class="container wide page">
+
+    <div class="pj-top anim-in">
+      <a class="btn btn-ghost btn-sm" href="dashboard.html"><span data-icon="arrowRight"></span><span data-i18n="back">رجوع</span></a>
+    </div>
+
+    <!-- password gate -->
+    <section id="gate" hidden>
+      <div class="auth-card" style="margin-inline:auto">
+        <div class="auth-head">
+          <span class="success-art" style="margin-inline:auto" data-icon="lock"></span>
+          <h1 data-i18n="gTitle">الاجتماع محمي بكلمة مرور</h1>
+          <p data-i18n="gSub">اكتب كلمة المرور اللي وصلتك من المضيف</p>
+        </div>
+        <form id="gateForm" class="stack g3" novalidate>
+          <div class="field">
+            <label class="label" for="gatePass" data-i18n="gPassL">كلمة مرور الاجتماع</label>
+            <div class="input-group">
+              <input class="input" type="password" id="gatePass" autocomplete="off" data-autofocus>
+              <button class="in-btn" type="button" id="gateEye" aria-label="إظهار كلمة المرور"></button>
+            </div>
+            <p class="err-msg" id="gateErr"></p>
+          </div>
+          <button class="btn btn-primary btn-block" type="submit" id="gateGo" data-i18n="gGo">متابعة</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- not found -->
+    <section id="nf" hidden>
+      <div class="card">
+        <div class="empty">
+          <span class="empty-art" data-icon="alert"></span>
+          <h3 data-i18n="nfTitle">مفيش اجتماع بالكود ده</h3>
+          <p data-i18n="nfSub">راجع الكود أو الرابط، أو ابدأ اجتماع جديد من الرئيسية.</p>
+          <a class="btn btn-primary" href="dashboard.html" data-i18n="nfBtn">الرجوع للرئيسية</a>
+        </div>
+      </div>
+    </section>
+
+    <!-- main prejoin -->
+    <section id="pjMain" hidden>
+      <div class="pj-grid">
+        <div>
+          <div class="stage cam-off" id="stage">
+            <video id="prev" autoplay playsinline muted></video>
+            <div class="off-state">
+              <span class="avatar" id="offAvatar">?</span>
+              <span data-i18n="camIsOff">الكاميرا مقفولة</span>
+            </div>
+            <div class="stage-bar">
+              <button class="ctl off" type="button" id="micBtn" data-i18n-title="micOn" title="فتح المايك"></button>
+              <button class="ctl off" type="button" id="camBtn" data-i18n-title="camOn" title="فتح الكاميرا"></button>
+            </div>
+          </div>
+          <p class="err-msg" id="mediaErr" style="margin-top:12px"></p>
+          <div class="lvl" style="margin-top:14px" id="lvlWrap" hidden>
+            <span data-icon="mic" style="color:var(--muted);display:grid;place-items:center"></span>
+            <span class="meter"><i id="lvlBar"></i></span>
+          </div>
+        </div>
+
+        <div class="card stack g3">
+          <div>
+            <div class="mtg-title" id="mName">—</div>
+            <div class="muted small" style="margin-top:3px"><span dir="ltr" id="mCode">—</span></div>
+          </div>
+
+          <div class="field">
+            <label class="label" for="nameInput" data-i18n="yourName">اسمك في الاجتماع</label>
+            <input class="input" id="nameInput" maxlength="40" data-i18n-ph="namePh" placeholder="اكتب اسمك">
+            <p class="err-msg" id="nameErr"></p>
+          </div>
+
+          <hr class="panel-divider">
+
+          <div class="field">
+            <label class="label" for="camSel" data-i18n="camera">الكاميرا</label>
+            <select class="select" id="camSel"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="micSel" data-i18n="microphone">الميكروفون</label>
+            <select class="select" id="micSel"></select>
+          </div>
+          <div class="field">
+            <label class="label" for="spkSel" data-i18n="speaker">السماعة</label>
+            <select class="select" id="spkSel"></select>
+            <p class="hint" id="spkHint" hidden data-i18n="spkUnsupported">متصفحك مش بيدعم اختيار السماعة — هيستخدم سماعة النظام الافتراضية.</p>
+          </div>
+
+          <button class="btn btn-primary btn-lg btn-block" type="button" id="joinBtn">
+            <span data-icon="video"></span><span data-i18n="joinNow">انضم للاجتماع</span>
+          </button>
+          <p class="hint" data-i18n="pjHint">تقدر تغيّر المايك والكاميرا في أي وقت جوه الاجتماع.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import { findMeeting, createMeeting, touchMeeting, getSettings, saveSettings, displayName as coreName, getUserRecord, getSession } from './liqaa-core.js';
+
+const DICT = {
+  ar: {
+    docTitle: "قبل الدخول — لقاء",
+    back: "رجوع",
+    gTitle: "الاجتماع محمي بكلمة مرور", gSub: "اكتب كلمة المرور اللي وصلتك من المضيف",
+    gPassL: "كلمة مرور الاجتماع", gGo: "متابعة", gChecking: "جارٍ التحقق…",
+    errNeedPass: "اكتب كلمة مرور الاجتماع", errWrongPass: "كلمة المرور غير صحيحة",
+    nfTitle: "مفيش اجتماع بالكود ده", nfSub: "راجع الكود أو الرابط، أو ابدأ اجتماع جديد من الرئيسية.",
+    nfBtn: "الرجوع للرئيسية",
+    camIsOff: "الكاميرا مقفولة",
+    micOn: "فتح المايك", micOff: "قفل المايك", camOn: "فتح الكاميرا", camOff: "قفل الكاميرا",
+    yourName: "اسمك في الاجتماع", namePh: "اكتب اسمك", errName: "اكتب اسمك عشان المشاركين يعرفوك",
+    camera: "الكاميرا", microphone: "الميكروفون", speaker: "السماعة",
+    spkUnsupported: "متصفحك مش بيدعم اختيار السماعة — هيستخدم سماعة النظام الافتراضية.",
+    joinNow: "انضم للاجتماع", joining: "جارٍ الدخول…",
+    pjHint: "تقدر تغيّر المايك والكاميرا في أي وقت جوه الاجتماع.",
+    lockedTitle: "الاجتماع مقفول", lockedSub: "المضيف قفل الاجتماع ومش بيقبل مشاركين جدد دلوقتي.",
+    showPass: "إظهار كلمة المرور", hidePass: "إخفاء كلمة المرور"
+  },
+  en: {
+    docTitle: "Before you join — Liqaa",
+    back: "Back",
+    gTitle: "This meeting is password protected", gSub: "Enter the password the host shared with you",
+    gPassL: "Meeting password", gGo: "Continue", gChecking: "Checking…",
+    errNeedPass: "Enter the meeting password", errWrongPass: "Incorrect password",
+    nfTitle: "No meeting with that code", nfSub: "Check the code or link, or start a new meeting from Home.",
+    nfBtn: "Back to Home",
+    camIsOff: "Camera is off",
+    micOn: "Turn on microphone", micOff: "Mute microphone", camOn: "Turn on camera", camOff: "Turn off camera",
+    yourName: "Your name in the meeting", namePh: "Enter your name", errName: "Add a name so people know who you are",
+    camera: "Camera", microphone: "Microphone", speaker: "Speaker",
+    spkUnsupported: "Your browser can't pick a speaker — it will use the system default.",
+    joinNow: "Join meeting", joining: "Joining…",
+    pjHint: "You can change your mic and camera anytime inside the meeting.",
+    lockedTitle: "Meeting locked", lockedSub: "The host locked this meeting and isn't accepting new participants right now.",
+    showPass: "Show password", hidePass: "Hide password"
+  }
+};
+
+if (!Liqaa.boot({ dict: DICT, requireAuth: true, active: '' })) await new Promise(() => {}); // requireAuth is navigating away — halt this module quietly
+
+const $ = (id) => document.getElementById(id);
+const T = (k, v) => Liqaa.t(k, v);
+
+function paintIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = Liqaa.icon(el.getAttribute('data-icon')); });
+}
+paintIcons();
+
+const params = new URLSearchParams(location.search);
+const code = String(params.get('room') || '').trim().toUpperCase();
+// A meeting created on someone else's device won't exist in our local history —
+// that's normal for an invite link, so we fall back to a code-only meeting.
+const known = findMeeting(code);
+const meeting = known || (code ? { code: code, name: code, requirePassword: false, password: '', local: false } : null);
+
+
+/* ---------- password gate ---------- */
+(function () {
+  const btn = $('gateEye'), input = $('gatePass');
+  function paint() {
+    const showing = input.type === 'text';
+    btn.innerHTML = Liqaa.icon(showing ? 'eyeOff' : 'eye');
+    btn.setAttribute('aria-label', T(showing ? 'hidePass' : 'showPass'));
+  }
+  paint();
+  btn.addEventListener('click', () => { input.type = input.type === 'password' ? 'text' : 'password'; paint(); });
+  document.addEventListener('liqaa:lang', paint);
+})();
+
+$('gatePass').addEventListener('input', () => { $('gatePass').classList.remove('err'); $('gateErr').classList.remove('show'); });
+$('gateForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('gateGo');
+  if (btn.disabled) return;
+  const v = $('gatePass').value.trim();
+  if (!v) { showErr($('gateErr'), T('errNeedPass')); $('gatePass').classList.add('err'); return; }
+  Liqaa.setLoading(btn, true, T('gChecking'));
+  setTimeout(() => {
+    Liqaa.setLoading(btn, false);
+    if (v !== String(meeting.password)) {
+      showErr($('gateErr'), T('errWrongPass'));
+      $('gatePass').classList.add('err');
+      return;
+    }
+    sessionStorage.setItem('liqaa_pass_ok_' + meeting.code, '1');
+    $('gate').hidden = true;
+    startPrejoin();
+  }, 500);
+});
+
+function showErr(el, msg) {
+  el.innerHTML = Liqaa.icon('alert') + '<span>' + Liqaa.escapeHtml(msg) + '</span>';
+  el.classList.add('show');
+}
+
+/* ---------- prejoin ---------- */
+let stream = null, audioCtx = null, rafId = 0;
+let wantMic = true, wantCam = true;
+
+function startPrejoin() {
+  $('pjMain').hidden = false;
+
+  const s = getSettings();
+  wantMic = s.joinWithMicOn !== false;
+  wantCam = s.joinWithCamOn !== false;
+
+  $('mName').textContent = meeting.name || meeting.code;
+  $('mCode').textContent = meeting.code;
+
+  const rec = getUserRecord() || getSession() || {};
+  const nm = coreName(rec) || '';
+  $('nameInput').value = sessionStorage.getItem('liqaa_join_name') || nm;
+  $('offAvatar').textContent = Liqaa.initials($('nameInput').value || nm || '?');
+
+  $('nameInput').addEventListener('input', () => {
+    $('nameInput').classList.remove('err');
+    $('nameErr').classList.remove('show');
+    $('offAvatar').textContent = Liqaa.initials($('nameInput').value || '?');
+  });
+
+  paintCtls();
+  refreshDevices().then(openMedia);
+}
+
+function paintCtls() {
+  const m = $('micBtn'), c = $('camBtn');
+  m.innerHTML = Liqaa.icon(wantMic ? 'mic' : 'micOff');
+  m.classList.toggle('off', !wantMic);
+  m.title = T(wantMic ? 'micOff' : 'micOn');
+  m.setAttribute('aria-label', m.title);
+  m.setAttribute('aria-pressed', String(!wantMic));
+
+  c.innerHTML = Liqaa.icon(wantCam ? 'cam' : 'camOff');
+  c.classList.toggle('off', !wantCam);
+  c.title = T(wantCam ? 'camOff' : 'camOn');
+  c.setAttribute('aria-label', c.title);
+  c.setAttribute('aria-pressed', String(!wantCam));
+
+  $('stage').classList.toggle('cam-off', !wantCam);
+  $('lvlWrap').hidden = !wantMic;
+}
+
+$('micBtn').addEventListener('click', () => {
+  wantMic = !wantMic;
+  saveSettings({ joinWithMicOn: wantMic });
+  paintCtls();
+  if (stream) stream.getAudioTracks().forEach(t => { t.enabled = wantMic; });
+  if (wantMic && stream && !stream.getAudioTracks().length) openMedia();
+});
+$('camBtn').addEventListener('click', () => {
+  wantCam = !wantCam;
+  saveSettings({ joinWithCamOn: wantCam });
+  paintCtls();
+  if (wantCam) openMedia();
+  else if (stream) stream.getVideoTracks().forEach(t => { t.stop(); stream.removeTrack(t); });
+});
+
+async function refreshDevices() {
+  const s = getSettings();
+  const d = await Liqaa.listDevices();
+  Liqaa.fillDeviceSelect($('camSel'), d.cams, s.devices.camera, T('camera'));
+  Liqaa.fillDeviceSelect($('micSel'), d.mics, s.devices.mic, T('microphone'));
+  Liqaa.fillDeviceSelect($('spkSel'), d.speakers, s.devices.speaker, T('speaker'));
+  const canPickSpk = 'setSinkId' in HTMLMediaElement.prototype;
+  $('spkSel').disabled = !canPickSpk || !d.speakers.length;
+  $('spkHint').hidden = canPickSpk;
+}
+
+[['camSel', 'camera'], ['micSel', 'mic'], ['spkSel', 'speaker']].forEach(([id, key]) => {
+  $(id).addEventListener('change', () => {
+    const s = getSettings();
+    saveSettings({ devices: Object.assign({}, s.devices, { [key]: $(id).value }) });
+    if (key !== 'speaker') openMedia();
+  });
+});
+
+function stopMeter() {
+  if (rafId) { cancelAnimationFrame(rafId); rafId = 0; }
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+  $('lvlBar').style.width = '0%';
+}
+
+async function openMedia() {
+  $('mediaErr').classList.remove('show');
+  const s = getSettings();
+  stopMeter();
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+  if (!wantMic && !wantCam) { $('prev').srcObject = null; return; }
+
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: wantCam ? (s.devices.camera ? { deviceId: { ideal: s.devices.camera } } : true) : false,
+      audio: wantMic ? (s.devices.mic ? { deviceId: { ideal: s.devices.mic } } : true) : false
+    });
+    $('prev').srcObject = stream;
+
+    if (wantMic && stream.getAudioTracks().length) {
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(stream);
+      const an = audioCtx.createAnalyser();
+      an.fftSize = 512;
+      src.connect(an);
+      const data = new Uint8Array(an.frequencyBinCount);
+      const tick = () => {
+        an.getByteTimeDomainData(data);
+        let peak = 0;
+        for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
+        $('lvlBar').style.width = Math.min(100, (peak / 60) * 100).toFixed(0) + '%';
+        rafId = requestAnimationFrame(tick);
+      };
+      tick();
+    }
+    refreshDevices();
+  } catch (err) {
+    showErr($('mediaErr'), Liqaa.mediaErrorMessage(err));
+    if (err && (err.name === 'NotAllowedError' || err.name === 'NotFoundError')) {
+      wantCam = false; wantMic = false; paintCtls();
+    }
+  }
+}
+
+function cleanup() {
+  stopMeter();
+  if (stream) { stream.getTracks().forEach(t => t.stop()); stream = null; }
+}
+window.addEventListener('pagehide', cleanup);
+
+/* ---------- join ---------- */
+$('joinBtn').addEventListener('click', () => {
+  const btn = $('joinBtn');
+  if (btn.disabled) return;
+  const name = $('nameInput').value.trim();
+  if (!name) {
+    $('nameInput').classList.add('err');
+    showErr($('nameErr'), T('errName'));
+    $('nameInput').focus();
+    return;
+  }
+  const fresh = findMeeting(meeting.code);
+  if (fresh && fresh.locked) {
+    showErr($('mediaErr'), T('lockedSub'));
+    Liqaa.toast(T('lockedTitle'), 'error');
+    return;
+  }
+  Liqaa.setLoading(btn, true, T('joining'));
+  sessionStorage.setItem('liqaa_join_name', name);
+  sessionStorage.setItem('liqaa_join_mic', wantMic ? '1' : '0');
+  sessionStorage.setItem('liqaa_join_cam', wantCam ? '1' : '0');
+  if (!known) createMeeting({ code: meeting.code, name: meeting.code, host: '' });
+  touchMeeting(meeting.code);
+  cleanup();
+  setTimeout(() => { location.href = 'room.html?room=' + encodeURIComponent(meeting.code); }, 320);
+});
+
+document.addEventListener('liqaa:lang', () => { paintIcons(); if (!$('pjMain').hidden) { paintCtls(); refreshDevices(); } });
+
+/* ---------- route ---------- */
+if (!code || !meeting) {
+  $('nf').hidden = false;
+} else if (meeting.requirePassword && meeting.password && sessionStorage.getItem('liqaa_pass_ok_' + meeting.code) !== '1') {
+  $('gate').hidden = false;
+} else {
+  startPrejoin();
+}
+</script>
+</body>
+</html>

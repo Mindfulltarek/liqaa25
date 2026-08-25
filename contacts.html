@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>جهات الاتصال — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .page-head { display: flex; align-items: flex-end; justify-content: space-between; gap: var(--sp-3); flex-wrap: wrap; margin-bottom: var(--sp-4); }
+  .page-head h1 { font-size: clamp(24px, 3vw, 30px); font-weight: 900; }
+  .page-head p { color: var(--muted); font-size: 15px; margin-top: 4px; }
+  .search-wrap { position: relative; flex: 1; min-width: 220px; max-width: 360px; }
+  .search-wrap > span { position: absolute; inset-inline-start: 13px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; color: var(--faint); pointer-events: none; display: grid; place-items: center; }
+  .search-wrap > span svg { width: 18px; height: 18px; }
+  .search-wrap .input { padding-inline-start: 42px; }
+  .toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: var(--sp-3); }
+
+  .dot {
+    width: 9px; height: 9px; border-radius: 50%; flex: none; display: inline-block;
+    background: var(--faint);
+  }
+  .dot.on { background: var(--ok); box-shadow: 0 0 0 3px rgba(52,211,153,.16); }
+  .dot.busy { background: var(--warn); }
+  .u-name { font-weight: 800; font-size: 15.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .u-handle { font-size: 13px; color: var(--muted); direction: ltr; unicode-bidi: plaintext; }
+  .blocked-row .mtg-thumb { background: var(--danger-bg); color: var(--danger); }
+</style>
+</head>
+<body class="app">
+<div id="appShell"></div>
+
+<main id="main">
+  <div class="container wide page">
+
+    <div class="page-head anim-in">
+      <div>
+        <h1 data-i18n="pTitle">جهات الاتصال</h1>
+        <p data-i18n="pSub">ابدأ اجتماع أو محادثة مع الأشخاص اللي في قائمتك</p>
+      </div>
+      <button class="btn btn-primary" id="addBtn" type="button">
+        <span data-icon="userPlus"></span><span data-i18n="addContact">إضافة جهة اتصال</span>
+      </button>
+    </div>
+
+    <div class="tabs" role="tablist" aria-label="Contacts">
+      <button class="tab active" type="button" role="tab" data-tab="all" aria-selected="true" data-i18n="tabAll">الكل</button>
+      <button class="tab" type="button" role="tab" data-tab="blocked" aria-selected="false" data-i18n="tabBlocked">المحظورون</button>
+    </div>
+
+    <div class="toolbar" id="toolbar">
+      <div class="search-wrap">
+        <span data-icon="search"></span>
+        <input class="input" id="search" type="search" data-i18n-ph="searchPh" placeholder="ابحث بالاسم أو المعرّف" autocomplete="off">
+      </div>
+      <button class="btn btn-ghost btn-sm" id="refreshBtn" type="button">
+        <span data-icon="refresh"></span><span data-i18n="refresh">تحديث الحالة</span>
+      </button>
+      <span class="faint" id="countTxt"></span>
+    </div>
+
+    <div class="card flush" id="listCard">
+      <div class="mtg-list" id="list">
+        <div class="skel skel-row" style="margin:10px"></div>
+        <div class="skel skel-row" style="margin:10px"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Add contact -->
+<div class="modal-scrim" id="addModal" role="dialog" aria-modal="true" aria-labelledby="addTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="addTitle" data-i18n="acTitle">إضافة جهة اتصال</h2>
+        <p data-i18n="acSub">اكتب معرّف المستخدم (@username) بتاع الشخص</p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+    <form id="addForm" class="modal-body" novalidate>
+      <div class="field">
+        <label class="label" for="acUser" data-i18n="acUserL">معرّف المستخدم</label>
+        <input class="input" id="acUser" dir="ltr" placeholder="username" autocomplete="off" data-autofocus>
+        <p class="hint" data-i18n="acHint">حروف إنجليزية صغيرة وأرقام و . _ فقط، من 3 لـ 20 حرف.</p>
+        <p class="err-msg" id="acErr"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-primary" type="submit" id="acGo" data-i18n="acAdd">إضافة</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Report user -->
+<div class="modal-scrim" id="reportModal" role="dialog" aria-modal="true" aria-labelledby="rpTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="rpTitle" data-i18n="rpTitle">الإبلاغ عن مستخدم</h2>
+        <p id="rpWho" class="muted"></p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+    <form id="reportForm" class="modal-body" novalidate>
+      <div class="field">
+        <span class="label" data-i18n="rpReasonL">سبب البلاغ</span>
+        <label class="radio"><input type="radio" name="rpReason" value="harassment" checked><span class="check-body"><b data-i18n="rpHarass">تحرش أو إساءة</b></span></label>
+        <label class="radio"><input type="radio" name="rpReason" value="spam"><span class="check-body"><b data-i18n="rpSpam">رسائل مزعجة / سبام</b></span></label>
+        <label class="radio"><input type="radio" name="rpReason" value="inappropriate"><span class="check-body"><b data-i18n="rpInapp">محتوى غير لائق</b></span></label>
+        <label class="radio"><input type="radio" name="rpReason" value="impersonation"><span class="check-body"><b data-i18n="rpImp">انتحال شخصية</b></span></label>
+        <label class="radio"><input type="radio" name="rpReason" value="other"><span class="check-body"><b data-i18n="rpOther">سبب آخر</b></span></label>
+      </div>
+      <div class="field">
+        <label class="label" for="rpDetails" data-i18n="rpDetailsL">تفاصيل إضافية (اختياري)</label>
+        <textarea class="textarea" id="rpDetails" maxlength="600" data-i18n-ph="rpDetailsPh" placeholder="اكتب أي تفاصيل تساعدنا في مراجعة البلاغ"></textarea>
+      </div>
+      <p class="hint" data-i18n="rpNote">البلاغ بيتسجل على جهازك في النسخة دي لحد ما نوصل المراجعة بالسيرفر.</p>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-danger" type="submit" id="rpGo" data-i18n="rpSend">إرسال البلاغ</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import {
+  getFriends, saveFriends, addFriend, removeFriend,
+  getBlocked, blockUser, unblockUser, isBlocked,
+  submitReport, probeUser, pushNotify, myUsername, displayName as coreName,
+  getUserRecord, getSession
+} from './liqaa-core.js';
+
+const DICT = {
+  ar: {
+    docTitle: "جهات الاتصال — لقاء",
+    pTitle: "جهات الاتصال", pSub: "ابدأ اجتماع أو محادثة مع الأشخاص اللي في قائمتك",
+    addContact: "إضافة جهة اتصال",
+    tabAll: "الكل", tabBlocked: "المحظورون",
+    searchPh: "ابحث بالاسم أو المعرّف", refresh: "تحديث الحالة", refreshing: "جارٍ التحديث…",
+    countTxt: "{n} جهة اتصال",
+    online: "متصل", offline: "غير متصل",
+    emptyTitle: "قائمتك فاضية", emptySub: "ضيف زمايلك بمعرّف المستخدم وابدأ اجتماع معاهم في ثانية.",
+    emptyBtn: "إضافة جهة اتصال",
+    noResTitle: "مفيش نتائج", noResSub: "جرّب تبحث باسم أو معرّف تاني.",
+    blockedEmptyTitle: "مفيش مستخدمين محظورين", blockedEmptySub: "أي حد تحظره هيظهر هنا وتقدر ترفع الحظر عنه في أي وقت.",
+    mCall: "اجتماع", mChat: "محادثة", mBlock: "حظر المستخدم", mRemove: "إزالة من القائمة", mReport: "إبلاغ", mUnblock: "رفع الحظر",
+    more: "خيارات أكثر",
+    acTitle: "إضافة جهة اتصال", acSub: "اكتب معرّف المستخدم (@username) بتاع الشخص",
+    acUserL: "معرّف المستخدم",
+    acHint: "حروف إنجليزية صغيرة وأرقام و . _ فقط، من 3 لـ 20 حرف.",
+    acAdd: "إضافة", acAdding: "جارٍ التحقق…",
+    errInvalid: "المعرّف لازم يكون 3–20 حرف إنجليزي صغير أو رقم أو . _",
+    errSelf: "ده معرّفك أنت 🙂",
+    errExists: "الشخص ده موجود في قائمتك بالفعل",
+    errBlockedUser: "المستخدم ده محظور — ارفع الحظر الأول",
+    added: "اتضاف لجهات اتصالك",
+    inviteSent: "تم إرسال طلب الإضافة — سيظهر في قائمتك بعد القبول",
+    errOffline: "المستخدم غير متصل حاليًا — جرّب مرة أخرى عندما يكون داخل التطبيق",
+    removeTitle: "إزالة من جهات الاتصال؟", removeMsg: "هتقدر تضيفه تاني في أي وقت بمعرّف المستخدم.",
+    removeYes: "إزالة", removed: "اتشال من قائمتك",
+    blockTitle: "حظر المستخدم؟", blockMsg: "مش هيقدر يبعتلك رسائل أو يدعوك لاجتماعات، وهيتشال من قائمة جهات الاتصال.",
+    blockYes: "حظر", blocked: "تم حظر المستخدم",
+    unblockTitle: "رفع الحظر؟", unblockMsg: "هيقدر يتواصل معاك تاني بعد رفع الحظر.",
+    unblockYes: "رفع الحظر", unblocked: "تم رفع الحظر",
+    rpTitle: "الإبلاغ عن مستخدم", rpReasonL: "سبب البلاغ",
+    rpHarass: "تحرش أو إساءة", rpSpam: "رسائل مزعجة / سبام", rpInapp: "محتوى غير لائق",
+    rpImp: "انتحال شخصية", rpOther: "سبب آخر",
+    rpDetailsL: "تفاصيل إضافية (اختياري)", rpDetailsPh: "اكتب أي تفاصيل تساعدنا في مراجعة البلاغ",
+    rpNote: "البلاغ بيتسجل على جهازك في النسخة دي لحد ما نوصل المراجعة بالسيرفر.",
+    rpSend: "إرسال البلاغ", rpSending: "جارٍ الإرسال…", rpDone: "وصلنا بلاغك، شكرًا ليك",
+    cancel: "إلغاء", close: "إغلاق"
+  },
+  en: {
+    docTitle: "Contacts — Liqaa",
+    pTitle: "Contacts", pSub: "Start a meeting or a chat with the people on your list",
+    addContact: "Add contact",
+    tabAll: "All", tabBlocked: "Blocked",
+    searchPh: "Search by name or handle", refresh: "Refresh status", refreshing: "Refreshing…",
+    countTxt: "{n} contacts",
+    online: "Online", offline: "Offline",
+    emptyTitle: "Your list is empty", emptySub: "Add teammates by their username and start a meeting in seconds.",
+    emptyBtn: "Add a contact",
+    noResTitle: "No results", noResSub: "Try a different name or handle.",
+    blockedEmptyTitle: "No blocked users", blockedEmptySub: "Anyone you block shows up here, and you can unblock them anytime.",
+    mCall: "Meet", mChat: "Chat", mBlock: "Block user", mRemove: "Remove from list", mReport: "Report", mUnblock: "Unblock",
+    more: "More options",
+    acTitle: "Add a contact", acSub: "Enter the person's username (@username)",
+    acUserL: "Username",
+    acHint: "Lowercase letters, numbers, dots and underscores. 3–20 characters.",
+    acAdd: "Add", acAdding: "Checking…",
+    errInvalid: "Usernames are 3–20 lowercase letters, numbers, dots or underscores",
+    errSelf: "That's your own username 🙂",
+    errExists: "That person is already on your list",
+    errBlockedUser: "That user is blocked — unblock them first",
+    added: "Added to your contacts",
+    inviteSent: "Request sent — they will appear after accepting",
+    errOffline: "This user is offline right now — try again when they are in the app",
+    removeTitle: "Remove this contact?", removeMsg: "You can add them again anytime with their username.",
+    removeYes: "Remove", removed: "Removed from your list",
+    blockTitle: "Block this user?", blockMsg: "They won't be able to message you or invite you to meetings, and they'll be removed from your contacts.",
+    blockYes: "Block", blocked: "User blocked",
+    unblockTitle: "Unblock this user?", unblockMsg: "They'll be able to reach you again.",
+    unblockYes: "Unblock", unblocked: "User unblocked",
+    rpTitle: "Report a user", rpReasonL: "Reason for the report",
+    rpHarass: "Harassment or abuse", rpSpam: "Spam", rpInapp: "Inappropriate content",
+    rpImp: "Impersonation", rpOther: "Something else",
+    rpDetailsL: "More details (optional)", rpDetailsPh: "Anything that helps us review this report",
+    rpNote: "In this version reports are stored on your device until server-side review ships.",
+    rpSend: "Send report", rpSending: "Sending…", rpDone: "Thanks — your report was submitted",
+    cancel: "Cancel", close: "Close"
+  }
+};
+
+if (!Liqaa.boot({ dict: DICT, requireAuth: true, active: 'contacts' })) await new Promise(() => {}); // requireAuth is navigating away — halt this module quietly
+
+const $ = (id) => document.getElementById(id);
+const T = (k, v) => Liqaa.t(k, v);
+let tab = 'all';
+let query = '';
+
+function paintIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = Liqaa.icon(el.getAttribute('data-icon')); });
+  document.querySelectorAll('.modal-close').forEach(b => { b.innerHTML = Liqaa.icon('close'); });
+}
+paintIcons();
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => { x.classList.remove('active'); x.setAttribute('aria-selected', 'false'); });
+    t.classList.add('active'); t.setAttribute('aria-selected', 'true');
+    tab = t.getAttribute('data-tab');
+    $('toolbar').hidden = tab !== 'all';
+    render();
+  });
+});
+$('search').addEventListener('input', e => { query = e.target.value.trim().toLowerCase(); render(); });
+
+function emptyBlock(iconName, title, sub, btnLabel, btnId) {
+  return '<div class="empty">' +
+    '<span class="empty-art">' + Liqaa.icon(iconName) + '</span>' +
+    '<h3>' + Liqaa.escapeHtml(title) + '</h3>' +
+    '<p>' + Liqaa.escapeHtml(sub) + '</p>' +
+    (btnLabel ? '<button class="btn btn-primary" type="button" id="' + btnId + '">' + Liqaa.icon('userPlus') + '<span>' + Liqaa.escapeHtml(btnLabel) + '</span></button>' : '') +
+  '</div>';
+}
+
+function render() {
+  const host = $('list'), card = $('listCard');
+
+  if (tab === 'blocked') {
+    const list = getBlocked();
+    $('countTxt').textContent = '';
+    if (!list.length) {
+      card.classList.remove('flush');
+      host.innerHTML = emptyBlock('ban', T('blockedEmptyTitle'), T('blockedEmptySub'), '', '');
+      return;
+    }
+    card.classList.add('flush');
+    host.innerHTML = list.map((b, i) =>
+      '<div class="mtg-row blocked-row" data-user="' + Liqaa.escapeHtml(b.username) + '">' +
+        '<span class="mtg-thumb">' + Liqaa.escapeHtml(Liqaa.initials(b.name || b.username)) + '</span>' +
+        '<span class="mtg-info"><span class="u-name">' + Liqaa.escapeHtml(b.name || b.username) + '</span>' +
+          '<span class="u-handle">@' + Liqaa.escapeHtml(b.username) + '</span></span>' +
+        '<span class="mtg-actions">' +
+          '<button class="btn btn-secondary btn-sm" type="button" data-act="unblock">' + Liqaa.escapeHtml(T('mUnblock')) + '</button>' +
+        '</span></div>').join('');
+    host.querySelectorAll('[data-act="unblock"]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const u = btn.closest('.mtg-row').getAttribute('data-user');
+        const ok = await Liqaa.confirm({ title: T('unblockTitle'), message: T('unblockMsg'), confirmText: T('unblockYes'), cancelText: T('cancel') });
+        if (ok) { unblockUser(u); render(); Liqaa.toast(T('unblocked'), 'ok'); }
+      });
+    });
+    return;
+  }
+
+  let list = getFriends().slice();
+  const total = list.length;
+  if (query) {
+    list = list.filter(f =>
+      String(f.name || '').toLowerCase().includes(query) ||
+      String(f.username || '').toLowerCase().includes(query));
+  }
+  $('countTxt').textContent = total ? T('countTxt', { n: list.length }) : '';
+
+  if (!total) {
+    card.classList.remove('flush');
+    host.innerHTML = emptyBlock('users', T('emptyTitle'), T('emptySub'), T('emptyBtn'), 'emptyAdd');
+    $('emptyAdd').addEventListener('click', openAdd);
+    return;
+  }
+  if (!list.length) {
+    card.classList.remove('flush');
+    host.innerHTML = emptyBlock('search', T('noResTitle'), T('noResSub'), '', '');
+    return;
+  }
+
+  card.classList.add('flush');
+  host.innerHTML = list.map((f, i) => {
+    const on = f.status && f.status !== 'offline';
+    return '<div class="mtg-row" data-user="' + Liqaa.escapeHtml(f.username) + '">' +
+      '<span class="mtg-thumb">' + Liqaa.escapeHtml(Liqaa.initials(f.name || f.username)) + '</span>' +
+      '<span class="mtg-info">' +
+        '<span class="u-name">' + Liqaa.escapeHtml(f.name || f.username) + '</span>' +
+        '<span class="mtg-meta"><span class="u-handle">@' + Liqaa.escapeHtml(f.username) + '</span>' +
+          '<span class="sep">•</span>' +
+          '<span class="row" style="gap:6px"><span class="dot' + (on ? ' on' : '') + '"></span>' +
+            Liqaa.escapeHtml(on ? T('online') : T('offline')) + '</span>' +
+        '</span>' +
+      '</span>' +
+      '<span class="mtg-actions">' +
+        '<button class="btn btn-secondary btn-sm" type="button" data-act="meet">' + Liqaa.escapeHtml(T('mCall')) + '</button>' +
+        '<span class="menu-wrap">' +
+          '<button class="icon-btn" type="button" id="cmore' + i + '" title="' + Liqaa.escapeHtml(T('more')) + '" aria-label="' + Liqaa.escapeHtml(T('more')) + '">' + Liqaa.icon('more') + '</button>' +
+          '<div class="menu" id="cmenu' + i + '" role="menu">' +
+            '<button class="menu-item" type="button" data-act="meet" role="menuitem">' + Liqaa.icon('video') + '<span>' + Liqaa.escapeHtml(T('mCall')) + '</span></button>' +
+            '<button class="menu-item" type="button" data-act="chat" role="menuitem">' + Liqaa.icon('chat') + '<span>' + Liqaa.escapeHtml(T('mChat')) + '</span></button>' +
+            '<button class="menu-item" type="button" data-act="report" role="menuitem">' + Liqaa.icon('flag') + '<span>' + Liqaa.escapeHtml(T('mReport')) + '</span></button>' +
+            '<div class="menu-sep"></div>' +
+            '<button class="menu-item danger" type="button" data-act="block" role="menuitem">' + Liqaa.icon('ban') + '<span>' + Liqaa.escapeHtml(T('mBlock')) + '</span></button>' +
+            '<button class="menu-item danger" type="button" data-act="remove" role="menuitem">' + Liqaa.icon('trash') + '<span>' + Liqaa.escapeHtml(T('mRemove')) + '</span></button>' +
+          '</div></span></span></div>';
+  }).join('');
+
+  list.forEach((f, i) => Liqaa.bindMenu('cmore' + i, 'cmenu' + i));
+
+  host.querySelectorAll('[data-act]').forEach(btn => {
+    btn.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const username = btn.closest('.mtg-row').getAttribute('data-user');
+      const f = getFriends().find(x => x.username === username) || { username };
+      Liqaa.closeAllMenus();
+      switch (btn.getAttribute('data-act')) {
+        case 'meet':
+          location.href = 'chat.html?u=' + encodeURIComponent(username) + '&call=video';
+          break;
+        case 'chat':
+          location.href = 'chat.html?u=' + encodeURIComponent(username);
+          break;
+        case 'report':
+          openReport(f);
+          break;
+        case 'block': {
+          const ok = await Liqaa.confirm({ title: T('blockTitle'), message: T('blockMsg'), confirmText: T('blockYes'), cancelText: T('cancel'), danger: true });
+          if (ok) { blockUser({ username, name: f.name || username }); removeFriend(username); render(); Liqaa.toast(T('blocked'), 'ok'); }
+          break;
+        }
+        case 'remove': {
+          const ok = await Liqaa.confirm({ title: T('removeTitle'), message: T('removeMsg'), confirmText: T('removeYes'), cancelText: T('cancel'), danger: true });
+          if (ok) { removeFriend(username); render(); Liqaa.toast(T('removed'), 'ok'); }
+          break;
+        }
+      }
+    });
+  });
+}
+
+/* ---------- add contact ---------- */
+function openAdd() {
+  $('addForm').reset();
+  $('acErr').classList.remove('show');
+  $('acUser').classList.remove('err');
+  Liqaa.openModal($('addModal'));
+}
+$('addBtn').addEventListener('click', openAdd);
+$('acUser').addEventListener('input', () => { $('acUser').classList.remove('err'); $('acErr').classList.remove('show'); });
+
+function fieldErr(errEl, inputEl, msg) {
+  errEl.innerHTML = Liqaa.icon('alert') + '<span>' + Liqaa.escapeHtml(msg) + '</span>';
+  errEl.classList.add('show');
+  if (inputEl) inputEl.classList.add('err');
+}
+
+function myFullName() {
+  const rec = getUserRecord() || getSession() || {};
+  return coreName(rec) || '';
+}
+
+$('addForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const btn = $('acGo');
+  if (btn.disabled) return;
+  $('acErr').classList.remove('show');
+
+  const v = $('acUser').value.trim().toLowerCase().replace(/^@/, '');
+  if (!/^[a-z0-9._]{3,20}$/.test(v)) { fieldErr($('acErr'), $('acUser'), T('errInvalid')); return; }
+  if (v === myUsername()) { fieldErr($('acErr'), $('acUser'), T('errSelf')); return; }
+  if (getFriends().some(f => f.username === v)) { fieldErr($('acErr'), $('acUser'), T('errExists')); return; }
+  if (isBlocked(v)) { fieldErr($('acErr'), $('acUser'), T('errBlockedUser')); return; }
+
+  Liqaa.setLoading(btn, true, T('acAdding'));
+  let probe = { online: false, name: '' };
+  try { probe = await probeUser(v, 'add' + Math.random().toString(36).slice(2, 5)); } catch (err) {}
+
+  if (!probe.online) {
+    Liqaa.setLoading(btn, false);
+    fieldErr($('acErr'), $('acUser'), T('errOffline'));
+    return;
+  }
+  // The contact is added only after the other person explicitly accepts.
+  let sent = false;
+  try { sent = await pushNotify(v, { type: 'contact-request', from: myUsername(), fromName: myFullName(), avatar: (getUserRecord() || {}).avatar || '' }); }
+  catch (err) {}
+  if (!sent) { Liqaa.setLoading(btn, false); fieldErr($('acErr'), $('acUser'), T('errOffline')); return; }
+  Liqaa.setLoading(btn, false);
+  Liqaa.closeModal($('addModal'));
+  Liqaa.toast(T('inviteSent'), 'ok');
+});
+
+/* ---------- refresh presence ---------- */
+$('refreshBtn').addEventListener('click', async () => {
+  const btn = $('refreshBtn');
+  const fs = getFriends();
+  if (!fs.length) return;
+  Liqaa.setLoading(btn, true, T('refreshing'));
+  for (let i = 0; i < fs.length; i++) {
+    try {
+      const p = await probeUser(fs[i].username, 'ref' + i);
+      fs[i].status = p.online ? (p.status || 'active') : 'offline';
+      if (p.online && p.name) fs[i].name = p.name;
+    } catch (e) { fs[i].status = 'offline'; }
+  }
+  saveFriends(fs);
+  Liqaa.setLoading(btn, false);
+  paintIcons();
+  render();
+});
+
+/* ---------- report ---------- */
+let reportTarget = null;
+function openReport(f) {
+  reportTarget = f;
+  $('reportForm').reset();
+  $('rpWho').textContent = '@' + f.username;
+  Liqaa.openModal($('reportModal'));
+}
+$('reportForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('rpGo');
+  if (btn.disabled || !reportTarget) return;
+  const reason = (document.querySelector('input[name="rpReason"]:checked') || {}).value || 'other';
+  const details = $('rpDetails').value.trim();
+  Liqaa.setLoading(btn, true, T('rpSending'));
+  setTimeout(() => {
+    submitReport({ kind: 'user', target: reportTarget.username, reason, details, by: myUsername() });
+    Liqaa.setLoading(btn, false);
+    Liqaa.closeModal($('reportModal'));
+    Liqaa.toast(T('rpDone'), 'ok');
+  }, 550);
+});
+
+document.addEventListener('liqaa:lang', () => { paintIcons(); render(); });
+setTimeout(render, 160);
+</script>
+</body>
+</html>

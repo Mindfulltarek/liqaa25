@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>المساعدة والدعم — لقاء</title>
+<meta name="description" content="Liqaa — Help &amp; Support">
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .hero { text-align: center; margin-bottom: var(--sp-5); }
+  .hero h1 { font-size: clamp(28px, 4vw, 38px); font-weight: 900; margin-bottom: 10px; }
+  .hero p { color: var(--muted); font-size: 17px; max-width: 560px; margin-inline: auto; line-height: 1.7; }
+
+  .topic-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: var(--sp-5); }
+  .topic {
+    padding: 20px; border-radius: var(--r-lg); background: var(--card); border: 1px solid var(--border);
+    text-align: start;
+  }
+  .topic .ti { width: 42px; height: 42px; border-radius: 12px; background: var(--tint); color: var(--c1); display: grid; place-items: center; margin-bottom: 12px; }
+  .topic .ti svg { width: 20px; height: 20px; }
+  .topic h3 { font-size: 16px; margin-bottom: 6px; }
+  .topic p { font-size: 13.5px; color: var(--muted); line-height: 1.65; }
+
+  .faq { border: 1px solid var(--border); border-radius: var(--r-lg); background: var(--card); overflow: hidden; }
+  .faq details + details { border-top: 1px solid var(--border); }
+  .faq summary {
+    list-style: none; cursor: pointer; padding: 16px 18px; font-weight: 700; font-size: 15.5px;
+    display: flex; align-items: center; gap: 12px;
+    transition: background var(--t-fast) var(--ease);
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary > svg { width: 19px; height: 19px; flex: none; color: var(--c1); }
+  .faq summary > span:not(.chev) { flex: 1; min-width: 0; }
+  .faq summary:hover { background: var(--glass); }
+  .faq summary .chev { margin-inline-start: auto; color: var(--muted); display: grid; place-items: center; transition: transform var(--t-mid) var(--ease); }
+  .faq summary .chev svg { width: 18px; height: 18px; }
+  .faq details[open] summary .chev { transform: rotate(90deg); }
+  .faq details[open] summary { color: var(--c1); }
+  .faq .ans { padding: 0 18px 18px; color: var(--muted); font-size: 14.5px; line-height: 1.85; }
+  .faq .ans ul { padding-inline-start: 20px; margin-top: 8px; }
+  .faq .ans li { margin-bottom: 6px; }
+  .faq .ans a { color: var(--c1); }
+
+  .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  @media (max-width: 900px) { .topic-grid { grid-template-columns: 1fr; } .contact-grid { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+<div id="publicBar"></div>
+
+<main id="main">
+  <div class="container page">
+
+    <section class="hero anim-in">
+      <h1 data-i18n="hTitle">المساعدة والدعم</h1>
+      <p data-i18n="hSub">أسئلة شائعة وحلول سريعة لأشهر المشاكل. لو مالقيتش إجابتك، كلمنا.</p>
+    </section>
+
+    <div class="topic-grid">
+      <div class="topic">
+        <span class="ti" data-icon="video"></span>
+        <h3 data-i18n="t1">الاجتماعات</h3>
+        <p data-i18n="t1s">إنشاء اجتماع، مشاركة الرابط، كلمات المرور، وغرفة الانتظار.</p>
+      </div>
+      <div class="topic">
+        <span class="ti" data-icon="mic"></span>
+        <h3 data-i18n="t2">الصوت والفيديو</h3>
+        <p data-i18n="t2s">أذونات الكاميرا والمايك، اختيار الأجهزة، ومشاكل الجودة.</p>
+      </div>
+      <div class="topic">
+        <span class="ti" data-icon="shield"></span>
+        <h3 data-i18n="t3">الحساب والخصوصية</h3>
+        <p data-i18n="t3s">التحقق من البريد، كلمة المرور، الحظر والبلاغات، وحذف الحساب.</p>
+      </div>
+    </div>
+
+    <h2 class="h2" style="margin-bottom:var(--sp-3)" data-i18n="faqTitle">الأسئلة الشائعة</h2>
+    <div class="faq" id="faq"></div>
+
+    <h2 class="h2" style="margin:var(--sp-5) 0 var(--sp-3)" data-i18n="contactTitle">لسه محتاج مساعدة؟</h2>
+    <div class="contact-grid">
+      <div class="card">
+        <form id="contactForm" class="stack g3" novalidate>
+          <div class="field">
+            <label class="label" for="cName" data-i18n="cNameL">اسمك</label>
+            <input class="input" id="cName" maxlength="60" autocomplete="name">
+          </div>
+          <div class="field">
+            <label class="label" for="cMail" data-i18n="cMailL">بريدك الإلكتروني</label>
+            <input class="input" id="cMail" type="email" dir="ltr" autocomplete="email">
+          </div>
+          <div class="field">
+            <label class="label" for="cMsg" data-i18n="cMsgL">رسالتك</label>
+            <textarea class="textarea" id="cMsg" maxlength="1200" data-i18n-ph="cMsgPh" placeholder="اوصف المشكلة بالتفصيل عشان نقدر نساعدك بسرعة"></textarea>
+          </div>
+          <p class="err-msg" id="cErr"></p>
+          <p class="hint" data-i18n="cNote">لسه مفيش سيرفر للدعم في النسخة دي — الزرار هيفتحلك برنامج البريد عندك برسالة جاهزة.</p>
+          <button class="btn btn-primary btn-block" type="submit" id="cGo" data-i18n="cSend">إرسال الرسالة</button>
+        </form>
+      </div>
+      <div class="card stack g3">
+        <div>
+          <h3 class="h3" style="font-size:17px;margin-bottom:6px" data-i18n="linksTitle">روابط مفيدة</h3>
+          <p class="muted small" data-i18n="linksSub">كل حاجة تخص استخدامك للقاء في مكان واحد.</p>
+        </div>
+        <a class="btn btn-secondary btn-block" href="guidelines.html" data-i18n="guidelines">إرشادات المجتمع</a>
+        <a class="btn btn-secondary btn-block" href="privacy.html" data-i18n="privacy">سياسة الخصوصية</a>
+        <a class="btn btn-secondary btn-block" href="terms.html" data-i18n="terms">شروط الخدمة</a>
+        <a class="btn btn-secondary btn-block" href="cookies.html" data-i18n="cookies">سياسة الكوكيز</a>
+      </div>
+    </div>
+  </div>
+</main>
+
+<div id="siteFooter"></div>
+
+<script src="assets/liqaa-ui.js"></script>
+<script>
+const DICT = {
+  ar: {
+    docTitle: "المساعدة والدعم — لقاء",
+    hTitle: "المساعدة والدعم",
+    hSub: "أسئلة شائعة وحلول سريعة لأشهر المشاكل. لو مالقيتش إجابتك، كلمنا.",
+    t1: "الاجتماعات", t1s: "إنشاء اجتماع، مشاركة الرابط، كلمات المرور، وغرفة الانتظار.",
+    t2: "الصوت والفيديو", t2s: "أذونات الكاميرا والمايك، اختيار الأجهزة، ومشاكل الجودة.",
+    t3: "الحساب والخصوصية", t3s: "التحقق من البريد، كلمة المرور، الحظر والبلاغات، وحذف الحساب.",
+    faqTitle: "الأسئلة الشائعة",
+    contactTitle: "لسه محتاج مساعدة؟",
+    cNameL: "اسمك", cMailL: "بريدك الإلكتروني", cMsgL: "رسالتك",
+    cMsgPh: "اوصف المشكلة بالتفصيل عشان نقدر نساعدك بسرعة",
+    cNote: "لسه مفيش سيرفر للدعم في النسخة دي — الزرار هيفتحلك برنامج البريد عندك برسالة جاهزة.",
+    cSend: "إرسال الرسالة", cOpening: "بنجهّز الرسالة…", cDone: "فتحنا لك برنامج البريد برسالتك",
+    errName: "اكتب اسمك", errMail: "اكتب بريد إلكتروني صحيح", errMsg: "اكتب رسالتك الأول",
+    linksTitle: "روابط مفيدة", linksSub: "كل حاجة تخص استخدامك للقاء في مكان واحد.",
+    guidelines: "إرشادات المجتمع", privacy: "سياسة الخصوصية", terms: "شروط الخدمة", cookies: "سياسة الكوكيز"
+  },
+  en: {
+    docTitle: "Help & Support — Liqaa",
+    hTitle: "Help & Support",
+    hSub: "Quick answers to the most common questions. If you can't find yours, get in touch.",
+    t1: "Meetings", t1s: "Creating meetings, sharing links, passwords and the waiting room.",
+    t2: "Audio & video", t2s: "Camera and mic permissions, picking devices, and quality issues.",
+    t3: "Account & privacy", t3s: "Email verification, passwords, blocking and reporting, account deletion.",
+    faqTitle: "Frequently asked questions",
+    contactTitle: "Still need help?",
+    cNameL: "Your name", cMailL: "Your email", cMsgL: "Your message",
+    cMsgPh: "Describe the issue in detail so we can help you faster",
+    cNote: "There's no support server in this version — the button opens your email app with the message ready to send.",
+    cSend: "Send message", cOpening: "Preparing your message…", cDone: "We opened your email app with your message",
+    errName: "Enter your name", errMail: "Enter a valid email address", errMsg: "Write your message first",
+    linksTitle: "Useful links", linksSub: "Everything about using Liqaa in one place.",
+    guidelines: "Community Guidelines", privacy: "Privacy Policy", terms: "Terms of Service", cookies: "Cookie Policy"
+  }
+};
+
+const FAQ = {
+  ar: [
+    ["إزاي أعمل اجتماع جديد؟",
+     "من الرئيسية اضغط <b>+ اجتماع جديد</b>، اكتب اسم الاجتماع، واختار لو عايز كلمة مرور أو تسجيل أو مميزات ذكاء اصطناعي، بعدين اضغط <b>إنشاء الاجتماع</b>. هيظهرلك كود ورابط تقدر تنسخهم وتبعتهم لأي حد."],
+    ["إزاي حد ينضم لاجتماعي؟",
+     "ابعتله الرابط، أو ابعتله الكود المكوّن من 6 حروف وأرقام وهو يدخل من زرار <b>انضمام لاجتماع</b> ويكتبه. لو الاجتماع محمي بكلمة مرور، هيتطلب منه يكتبها قبل ما يدخل."],
+    ["الكاميرا أو المايك مش شغالين — أعمل إيه؟",
+     "أول حاجة: المتصفح لازم يكون واخد إذن. اضغط على أيقونة القفل جنب عنوان الموقع واسمح للكاميرا والمايك، وبعدين حدّث الصفحة.<ul><li>اتأكد إن مفيش برنامج تاني (زوم، تيمز، كاميرا الويندوز) ماسك الكاميرا.</li><li>من <b>الإعدادات ← الصوت والفيديو</b> اختار الجهاز الصح واضغط <b>اختبار الكاميرا والمايك</b>.</li><li>على الموبايل، لازم الموقع يكون مفتوح بـ HTTPS.</li></ul>"],
+    ["الصورة أو الصوت متقطعين",
+     "ده غالبًا الشبكة. جرّب:<ul><li>اقفل الكاميرا وسيب الصوت بس — الصوت بيحتاج نت أقل بكتير.</li><li>قرّب من الراوتر أو استخدم كابل.</li><li>اقفل التحميلات والتابات التقيلة.</li><li>لو بتشارك شاشتك، وقّف المشاركة لما تخلص.</li></ul>"],
+    ["إزاي أسجّل الاجتماع؟",
+     "من شريط الأدوات تحت اضغط زرار التسجيل 🔴، والمتصفح هيسألك تختار الشاشة أو التاب اللي عايز تسجّله. التسجيل <b>محلي على جهازك بالكامل</b> — مفيش نسخة بتترفع على أي سيرفر — ولما توقّفه الملف بينزل عندك على طول. كل اللي في الاجتماع بيشوفوا علامة «جارٍ التسجيل» وقتها."],
+    ["إيه اللي بيحصل للتفريغ النصي والملخص؟",
+     "التفريغ النصي بيشتغل من خلال تعرّف الكلام الموجود في متصفحك (Chrome أو Edge على الكمبيوتر)، والملخص بيتولّد على جهازك من النص ده. مفيش حاجة بتتبعت لأي سيرفر خارجي.<br>التفريغ والملخص ممكن يكونوا غير دقيقين — راجعهم قبل ما تعتمد عليهم. وتقدر تنزّل النص أو تمسحه في أي وقت من نفس اللوحة."],
+    ["إزاي أمنع ناس مش مدعوة تدخل؟",
+     "عندك 3 أدوات:<ul><li><b>كلمة مرور</b> — فعّلها وانت بتعمل الاجتماع.</li><li><b>غرفة الانتظار</b> — من قائمة <b>خيارات أكثر</b> جوه الاجتماع، وساعتها كل واحد هيستنى لحد ما تقبله.</li><li><b>قفل الاجتماع</b> — بعد ما الكل يدخل، اقفله فمحدش تاني يقدر يدخل.</li></ul>"],
+    ["مجاليش كود التحقق على الإيميل",
+     "استنى دقيقة وشوف مجلد <b>Spam / Junk</b>. لو مجاش، اضغط <b>إعادة الإرسال</b> بعد ما العداد يخلص (60 ثانية). اتأكد كمان إنك كاتب البريد صح — الكود بيقع بعد 10 دقايق."],
+    ["نسيت كلمة المرور",
+     "من صفحة الدخول اضغط <b>نسيت كلمة المرور؟</b>، اكتب بريدك، وهيوصلك كود من 6 أرقام. اكتب الكود مع كلمة مرور جديدة وهترجع تدخل عادي."],
+    ["إزاي أحظر حد أو أبلّغ عنه؟",
+     "جوه الاجتماع افتح لوحة <b>المشاركين</b> واضغط ••• جنب اسم الشخص، وهتلاقي <b>إبلاغ</b> و<b>حظر</b>. ومن صفحة <b>جهات الاتصال</b> تقدر تعمل نفس الحاجة لأي حد في قائمتك، وتشوف كل المحظورين وترفع الحظر عنهم من <b>الإعدادات ← المحظورون</b>."],
+    ["فين بياناتي متخزّنة؟",
+     "في النسخة دي حسابك واجتماعاتك وجهات اتصالك متخزّنين محليًا في متصفحك على الجهاز ده. يعني لو مسحت بيانات المتصفح أو فتحت من جهاز تاني، مش هتلاقيهم. الصوت والفيديو نفسهم بيمشوا لحظيًا من غير تخزين."],
+    ["إزاي أمسح حسابي؟",
+     "من <b>الإعدادات ← منطقة الخطر ← حذف الحساب</b>. هنطلب منك تكتب كلمة تأكيد، وبعدها بيتمسح حسابك وكل بياناتك من الجهاز ده نهائيًا ومش ممكن ترجعهم."]
+  ],
+  en: [
+    ["How do I start a new meeting?",
+     "On Home, click <b>+ New meeting</b>, give it a name, choose whether you want a password, recording, or AI features, then click <b>Create meeting</b>. You'll get a code and a link you can copy and share with anyone."],
+    ["How does someone join my meeting?",
+     "Send them the link, or send the 6-character code — they click <b>Join meeting</b> and type it in. If the meeting is password protected, they'll be asked for the password before joining."],
+    ["My camera or microphone isn't working",
+     "First, your browser needs permission. Click the padlock next to the address bar, allow camera and microphone, then reload the page.<ul><li>Make sure no other app (Zoom, Teams, the camera app) is holding the camera.</li><li>Go to <b>Settings → Audio &amp; video</b>, pick the right device and hit <b>Test camera &amp; mic</b>.</li><li>On mobile, the site must be served over HTTPS.</li></ul>"],
+    ["Video or audio keeps freezing",
+     "This is usually the network. Try:<ul><li>Turn your camera off and keep audio only — audio needs far less bandwidth.</li><li>Move closer to the router, or use a cable.</li><li>Close downloads and heavy tabs.</li><li>Stop screen sharing when you're done with it.</li></ul>"],
+    ["How do I record a meeting?",
+     "Click the 🔴 record button in the bottom control bar and your browser will ask which screen or tab to capture. The recording is <b>entirely local to your device</b> — nothing is uploaded to any server — and the file downloads as soon as you stop. Everyone in the meeting sees a &ldquo;Recording&rdquo; indicator while it runs."],
+    ["What happens with transcription and summaries?",
+     "Transcription uses your browser's built-in speech recognition (Chrome or Edge on desktop), and the summary is generated on your device from that transcript. Nothing is sent to an external server.<br>Transcripts and summaries can be inaccurate — review them before relying on them. You can download or delete the transcript anytime from the same panel."],
+    ["How do I keep uninvited people out?",
+     "You have three tools:<ul><li><b>Password</b> — enable it when creating the meeting.</li><li><b>Waiting room</b> — from <b>More options</b> inside the meeting, so you approve each person.</li><li><b>Lock meeting</b> — once everyone has arrived, lock it so nobody else can join.</li></ul>"],
+    ["I didn't get my verification code",
+     "Wait a minute and check your <b>Spam / Junk</b> folder. If it still hasn't arrived, hit <b>Resend</b> once the 60-second countdown finishes. Double-check the email address too — codes expire after 10 minutes."],
+    ["I forgot my password",
+     "On the login page click <b>Forgot password?</b>, enter your email, and we'll send a 6-digit code. Enter the code along with a new password and you're back in."],
+    ["How do I block or report someone?",
+     "In a meeting, open the <b>Participants</b> panel and click ••• next to their name for <b>Report</b> and <b>Block</b>. You can do the same for anyone on your <b>Contacts</b> page, and review or undo blocks in <b>Settings → Blocked users</b>."],
+    ["Where is my data stored?",
+     "In this version your account, meetings and contacts are stored locally in your browser on this device. If you clear browser data or open Liqaa on another device, they won't be there. Audio and video themselves stream in real time and are never stored."],
+    ["How do I delete my account?",
+     "Go to <b>Settings → Danger zone → Delete account</b>. We'll ask you to type a confirmation word, then your account and all its data are permanently erased from this device. This can't be undone."]
+  ]
+};
+
+Liqaa.boot({ dict: DICT });
+
+const $ = (id) => document.getElementById(id);
+const T = (k) => Liqaa.t(k);
+
+function paintIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = Liqaa.icon(el.getAttribute('data-icon')); });
+}
+paintIcons();
+
+function renderFaq() {
+  const list = FAQ[Liqaa.lang()] || FAQ.ar;
+  $('faq').innerHTML = list.map(([q, a]) =>
+    '<details><summary>' + Liqaa.icon('help') + '<span>' + Liqaa.escapeHtml(q) + '</span>' +
+    '<span class="chev">' + Liqaa.icon(Liqaa.lang() === 'ar' ? 'arrowLeft' : 'arrowRight') + '</span></summary>' +
+    '<div class="ans">' + a + '</div></details>').join('');
+}
+renderFaq();
+
+function showErr(msg) {
+  $('cErr').innerHTML = Liqaa.icon('alert') + '<span>' + Liqaa.escapeHtml(msg) + '</span>';
+  $('cErr').classList.add('show');
+}
+['cName', 'cMail', 'cMsg'].forEach(id => $(id).addEventListener('input', () => {
+  $(id).classList.remove('err'); $('cErr').classList.remove('show');
+}));
+
+const u = Liqaa.currentUser();
+if (u) { $('cName').value = Liqaa.displayName(u); $('cMail').value = u.email || ''; }
+
+$('contactForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('cGo');
+  if (btn.disabled) return;
+  $('cErr').classList.remove('show');
+
+  const name = $('cName').value.trim();
+  const mail = $('cMail').value.trim();
+  const msg = $('cMsg').value.trim();
+  if (!name) { $('cName').classList.add('err'); showErr(T('errName')); $('cName').focus(); return; }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(mail)) { $('cMail').classList.add('err'); showErr(T('errMail')); $('cMail').focus(); return; }
+  if (!msg) { $('cMsg').classList.add('err'); showErr(T('errMsg')); $('cMsg').focus(); return; }
+
+  Liqaa.setLoading(btn, true, T('cOpening'));
+  setTimeout(() => {
+    const subject = 'Liqaa support — ' + name;
+    const body = msg + '\n\n---\n' + name + ' <' + mail + '>\n' + navigator.userAgent;
+    location.href = 'mailto:support@liqaa.app?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+    Liqaa.setLoading(btn, false);
+    Liqaa.toast(T('cDone'), 'ok');
+  }, 450);
+});
+
+document.addEventListener('liqaa:lang', () => { paintIcons(); renderFaq(); });
+</script>
+</body>
+</html>

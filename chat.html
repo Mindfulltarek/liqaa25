@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>المحادثة — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .chat-shell {
+    display: flex; flex-direction: column;
+    height: calc(100vh - var(--nav-h)); min-height: 0;
+    border: 1px solid var(--border); border-radius: var(--r-xl);
+    background: var(--card); overflow: hidden;
+    margin-block: var(--sp-4);
+  }
+  .chat-head { display: flex; align-items: center; gap: 12px; padding: 12px 15px; border-bottom: 1px solid var(--border); }
+  .chat-head .who { flex: 1; min-width: 0; }
+  .chat-head .nm { font-weight: 800; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .chat-head .st { font-size: 12.5px; color: var(--muted); display: flex; align-items: center; gap: 6px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--faint); flex: none; }
+  .dot.st-active { background: var(--ok); box-shadow: 0 0 0 3px rgba(52,211,153,.16); }
+  .dot.st-busy { background: var(--danger); }
+  .dot.st-away { background: var(--warn); }
+
+  .call-area { display: none; border-bottom: 1px solid var(--border); background: #0B0907; position: relative; }
+  .call-area.on { display: block; }
+  .call-stage { position: relative; width: 100%; aspect-ratio: 16/9; max-height: 46vh; display: grid; place-items: center; }
+  .call-stage video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .voice-avatar {
+    width: 92px; height: 92px; border-radius: 50%; background: var(--grad); color: #fff;
+    display: grid; place-items: center; font-size: 34px; font-weight: 900;
+  }
+  .call-pip {
+    position: absolute; inset-inline-end: 12px; bottom: 12px; width: 132px; aspect-ratio: 4/3;
+    border-radius: var(--r-sm); overflow: hidden; background: #14100C;
+    border: 1px solid rgba(255,255,255,.16); display: grid; place-items: center; z-index: 2;
+  }
+  .call-pip video { width: 100%; height: 100%; object-fit: cover; transform: scaleX(-1); }
+  .call-pip .ph { color: #fff; font-weight: 900; font-size: 22px; }
+  .call-bar {
+    display: flex; align-items: center; justify-content: center; gap: 9px; padding: 11px;
+    background: var(--bg2); border-top: 1px solid var(--border);
+  }
+  .call-bar .lbl { position: absolute; inset-inline-start: 15px; font-size: 13px; color: var(--muted); }
+  .cctl {
+    width: 44px; height: 44px; border-radius: 13px; border: 1px solid var(--border-strong);
+    background: var(--glass); color: var(--text); display: grid; place-items: center; cursor: pointer;
+    transition: background var(--t-fast) var(--ease), transform var(--t-fast) var(--ease);
+  }
+  .cctl svg { width: 19px; height: 19px; }
+  .cctl:hover { background: var(--glass-hover); }
+  .cctl:active { transform: scale(.94); }
+  .cctl.off { background: var(--danger); border-color: transparent; color: #fff; }
+  .cctl.end { background: var(--danger); border-color: transparent; color: #fff; }
+
+  .msgs { flex: 1; overflow-y: auto; padding: 16px; min-height: 0; display: flex; flex-direction: column; gap: 9px; }
+  .bub {
+    max-width: min(76%, 520px); padding: 10px 14px; border-radius: 17px;
+    font-size: 14.8px; line-height: 1.65; word-wrap: break-word; position: relative;
+    animation: fadeUp 180ms var(--ease);
+  }
+  .bub.me { align-self: flex-end; background: var(--grad); color: #fff; border-end-end-radius: 6px; }
+  .bub.them { align-self: flex-start; background: var(--glass); border: 1px solid var(--border); border-end-start-radius: 6px; }
+  .bub .t { display: block; font-size: 10.5px; opacity: .72; margin-top: 4px; direction: ltr; }
+  .bub.me .t { text-align: start; }
+  .bub.sys {
+    align-self: center; background: transparent; color: var(--faint); font-size: 12.5px;
+    padding: 4px 10px; max-width: none;
+  }
+  .chat-img, .chat-vid { max-width: 100%; border-radius: 11px; display: block; }
+  .file-chip { display: flex; align-items: center; gap: 10px; }
+  .file-chip svg { width: 20px; height: 20px; flex: none; }
+  .file-chip .finfo { flex: 1; min-width: 0; }
+  .file-chip .fname { font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .file-chip .fsize { font-size: 11.5px; opacity: .75; }
+  .file-chip a { color: inherit; display: grid; place-items: center; }
+
+  .composer { border-top: 1px solid var(--border); padding: 11px; position: relative; }
+  .composer-row { display: flex; align-items: center; gap: 7px; }
+  .composer-row .input { flex: 1; min-height: 44px; }
+  .status-line { font-size: 12.5px; color: var(--muted); padding: 0 4px 7px; min-height: 18px; }
+  .status-line.err { color: var(--danger); }
+  .emoji-pop {
+    position: absolute; bottom: calc(100% - 4px); inset-inline-end: 11px; z-index: 40;
+    display: none; grid-template-columns: repeat(8, 1fr); gap: 3px; padding: 9px;
+    width: 300px; max-height: 220px; overflow-y: auto;
+    background: var(--card); border: 1px solid var(--border-strong);
+    border-radius: var(--r-md); box-shadow: var(--shadow-lg);
+  }
+  .emoji-pop.open { display: grid; }
+  .emoji-pop button { border: 0; background: transparent; font-size: 20px; cursor: pointer; border-radius: 7px; padding: 3px; line-height: 1; }
+  .emoji-pop button:hover { background: var(--glass); }
+
+  .incoming {
+    position: fixed; inset: 0; z-index: 400; display: none;
+    align-items: center; justify-content: center; padding: 24px;
+    background: rgba(10,7,5,.86); backdrop-filter: blur(6px);
+  }
+  .incoming.show { display: flex; }
+  .incoming .box { text-align: center; max-width: 340px; }
+  .incoming .avatar { margin-inline: auto; animation: ring 1.4s ease-in-out infinite; }
+  @keyframes ring { 0%,100% { transform: scale(1); } 50% { transform: scale(1.06); } }
+
+  @media (max-width: 640px) {
+    .chat-shell { height: calc(100vh - var(--nav-h)); margin-block: 0; border-radius: 0; border-inline: 0; }
+    .msgs { padding: 12px; }
+    .bub { max-width: 88%; }
+  }
+</style>
+</head>
+<body class="app">
+<div id="appShell"></div>
+
+<main id="main">
+  <div class="container" style="max-width:860px">
+    <div class="chat-shell">
+
+      <header class="chat-head">
+        <a class="icon-btn" href="contacts.html" id="backBtn" data-i18n-title="back" title="رجوع"></a>
+        <span class="avatar" id="cAvatar">?</span>
+        <div class="who">
+          <div class="nm" id="cName">—</div>
+          <div class="st"><span class="dot" id="cDot"></span><span id="cStatus">—</span> <span class="faint" id="cUser" dir="ltr"></span></div>
+        </div>
+        <button class="icon-btn" id="voiceBtn" type="button" data-i18n-title="voiceCall" title="مكالمة صوتية"></button>
+        <button class="icon-btn" id="videoBtn" type="button" data-i18n-title="videoCall" title="مكالمة فيديو"></button>
+        <span class="menu-wrap">
+          <button class="icon-btn" id="moreBtn" type="button" data-i18n-title="more" title="خيارات أكثر"></button>
+          <div class="menu" id="moreMenu" role="menu">
+            <button class="menu-item" type="button" id="mMeet" role="menuitem"></button>
+            <button class="menu-item" type="button" id="mClear" role="menuitem"></button>
+            <div class="menu-sep"></div>
+            <button class="menu-item danger" type="button" id="mBlock" role="menuitem"></button>
+          </div>
+        </span>
+      </header>
+
+      <section class="call-area" id="callArea">
+        <div class="call-stage" id="callStage"></div>
+        <div class="call-pip"><span class="ph" id="pipPh">?</span><span id="pipMedia"></span></div>
+        <div class="call-bar" style="position:relative">
+          <span class="lbl" id="callStatus"></span>
+          <button class="cctl" id="callMic" type="button" data-i18n-title="micOff" title="كتم المايك"></button>
+          <button class="cctl" id="callCam" type="button" data-i18n-title="camOff" title="قفل الكاميرا"></button>
+          <button class="cctl end" id="callEndBtn" type="button" data-i18n-title="endCall" title="إنهاء المكالمة"></button>
+        </div>
+      </section>
+
+      <div class="msgs" id="msgs"></div>
+
+      <div class="composer">
+        <div class="status-line" id="statusLine"></div>
+        <div class="composer-row">
+          <button class="icon-btn" id="fileBtn" type="button" data-i18n-title="attach" title="إرفاق ملف"></button>
+          <button class="icon-btn" id="emojiBtn" type="button" data-i18n-title="emoji" title="إيموجي"></button>
+          <input class="input" id="chatInput" data-i18n-ph="chatPh" placeholder="اكتب رسالة…" autocomplete="off">
+          <button class="icon-btn" id="chatSend" type="button" data-i18n-title="send" title="إرسال"></button>
+        </div>
+        <input type="file" id="fileInput" multiple hidden>
+        <div class="emoji-pop" id="emojiPop"></div>
+      </div>
+
+    </div>
+  </div>
+</main>
+
+<div class="incoming" id="incoming">
+  <div class="box stack g3" style="align-items:center">
+    <span class="avatar xl" id="incAvatar">?</span>
+    <h2 style="font-size:21px" id="incText">مكالمة واردة…</h2>
+    <p class="muted" id="incSub"></p>
+    <div class="row" style="gap:12px;margin-top:8px">
+      <button class="btn btn-danger" id="incDecline" type="button"></button>
+      <button class="btn btn-primary" id="incAccept" type="button"></button>
+    </div>
+  </div>
+</div>
+
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import { Room, RoomEvent, ParticipantEvent } from './livekit-client.bundle.js';
+import {
+  LIVEKIT_CONFIG, makeToken, dmRoom, probeUser, pushNotify,
+  getSession, getUserRecord, getFriends, getChatHistory, saveChatHistory,
+  myUsername, SRC_MIC, SRC_CAM, blockUser, removeFriend, createMeeting, meetingLink
+} from './liqaa-core.js';
+
+const DICT = {
+  ar: {
+    docTitle: "المحادثة — لقاء",
+    back: "رجوع", more: "خيارات أكثر",
+    chatPh: "اكتب رسالة…", send: "إرسال", attach: "إرفاق ملف", emoji: "إيموجي",
+    voiceCall: "مكالمة صوتية", videoCall: "مكالمة فيديو",
+    micOn: "فتح المايك", micOff: "كتم المايك", camOn: "فتح الكاميرا", camOff: "قفل الكاميرا",
+    endCall: "إنهاء المكالمة",
+    stActive: "نشط", stBusy: "مشغول", stAway: "غير متاح", stOffline: "غير متصل",
+    voice: "صوت", video: "فيديو",
+    incoming: "مكالمة واردة…", accept: "رد", decline: "رفض",
+    voiceRinging: "بيرن…", videoRinging: "مكالمة فيديو… بيرن",
+    voiceCallOn: "مكالمة صوت", videoCallOn: "مكالمة فيديو",
+    noAnswer: "مفيش رد", declined: "رفض المكالمة", callEnded: "انتهت المكالمة",
+    awayMsg: "غير متاح دلوقتي — الرسايل مش هتوصل",
+    offlineMsg: "مش متصل دلوقتي",
+    busyTrying: "مشغول دلوقتي — بنحاول نبلّغه",
+    busyNotify: "حاول يوصلك وانت مشغول",
+    voiceCallNotify: "بعتلك مكالمة صوت", videoCallNotify: "بعتلك مكالمة فيديو",
+    fileSending: "بنبعت الملف… {n}", fileSent: "اتبعت الملف", fileFail: "فشل إرسال الملف",
+    fileTooBig: "الملف أكبر من 8 ميجا",
+    emptyChat: "مفيش رسايل لسه — ابدأ الكلام 👋",
+    mMeet: "ابدأ اجتماع فيديو", mClear: "مسح المحادثة", mBlock: "حظر المستخدم",
+    clearTitle: "مسح المحادثة؟", clearMsg: "هتتمسح كل الرسايل المحفوظة معاه على الجهاز ده.",
+    clearYes: "مسح", cleared: "تم مسح المحادثة",
+    blockTitle: "حظر المستخدم؟", blockMsg: "مش هيقدر يبعتلك رسايل أو يدعوك لاجتماعات، وهيتشال من جهات اتصالك.",
+    blockYes: "حظر", blocked: "تم حظر المستخدم",
+    cancel: "إلغاء"
+  },
+  en: {
+    docTitle: "Chat — Liqaa",
+    back: "Back", more: "More options",
+    chatPh: "Type a message…", send: "Send", attach: "Attach a file", emoji: "Emoji",
+    voiceCall: "Voice call", videoCall: "Video call",
+    micOn: "Unmute", micOff: "Mute", camOn: "Turn on camera", camOff: "Turn off camera",
+    endCall: "End call",
+    stActive: "Active", stBusy: "Busy", stAway: "Away", stOffline: "Offline",
+    voice: "voice", video: "video",
+    incoming: "Incoming call…", accept: "Answer", decline: "Decline",
+    voiceRinging: "Ringing…", videoRinging: "Video call… ringing",
+    voiceCallOn: "Voice call", videoCallOn: "Video call",
+    noAnswer: "No answer", declined: "Call declined", callEnded: "Call ended",
+    awayMsg: "They're away right now — messages won't be delivered",
+    offlineMsg: "They're not connected right now",
+    busyTrying: "They're busy — trying to notify them",
+    busyNotify: "Tried to reach you while you were busy",
+    voiceCallNotify: "Sent you a voice call", videoCallNotify: "Sent you a video call",
+    fileSending: "Sending file… {n}", fileSent: "File sent", fileFail: "File sending failed",
+    fileTooBig: "File is bigger than 8MB",
+    emptyChat: "No messages yet — say hi 👋",
+    mMeet: "Start a video meeting", mClear: "Clear conversation", mBlock: "Block user",
+    clearTitle: "Clear this conversation?", clearMsg: "Every saved message with them will be removed from this device.",
+    clearYes: "Clear", cleared: "Conversation cleared",
+    blockTitle: "Block this user?", blockMsg: "They won't be able to message you or invite you to meetings, and they'll be removed from your contacts.",
+    blockYes: "Block", blocked: "User blocked",
+    cancel: "Cancel"
+  }
+};
+
+if (!Liqaa.boot({ dict: DICT, requireAuth: true, active: 'contacts' })) await new Promise(() => {}); // requireAuth is navigating away — halt this module quietly
+
+const $ = (id) => document.getElementById(id);
+const T = (k, v) => Liqaa.t(k, v);
+
+/* ---------- identity ---------- */
+const me = getUserRecord() || getSession() || {};
+const myUser = myUsername();
+const meName = Liqaa.displayName(me) || 'me';
+const themUser = String(new URLSearchParams(location.search).get('u') || '').toLowerCase();
+const autoCall = new URLSearchParams(location.search).get('call');
+
+if (!myUser) {
+  // v4 lets you set a username in settings; without one there's no DM room to join.
+  Liqaa.toast(Liqaa.lang() === 'ar' ? 'اضبط معرّف المستخدم من الإعدادات الأول' : 'Set your username in Settings first', 'error', 4000);
+  setTimeout(() => location.replace('settings.html#account'), 1600);
+}
+if (!themUser) location.replace('contacts.html');
+
+const friend = getFriends().find(f => f.username === themUser) || { username: themUser, name: themUser };
+const DM = dmRoom(myUser || 'me', themUser);
+const identity = (myUser || 'me') + ':c' + Math.random().toString(36).slice(2, 8);
+
+let room = null;
+let friendStatus = 'offline';
+let callState = 'none';   // none | outgoing | incoming | active
+let callKind = 'voice';
+let ringingTimer = null;
+let lastMsgNotify = 0;
+
+/* ---------- chrome ---------- */
+function paintIcons() {
+  $('backBtn').innerHTML = Liqaa.icon(Liqaa.lang() === 'ar' ? 'arrowRight' : 'arrowLeft');
+  $('voiceBtn').innerHTML = Liqaa.icon('mic');
+  $('videoBtn').innerHTML = Liqaa.icon('video');
+  $('moreBtn').innerHTML = Liqaa.icon('more');
+  $('fileBtn').innerHTML = Liqaa.icon('plus');
+  $('emojiBtn').innerHTML = Liqaa.icon('smile');
+  $('chatSend').innerHTML = Liqaa.icon(Liqaa.lang() === 'ar' ? 'arrowLeft' : 'arrowRight');
+  $('callEndBtn').innerHTML = Liqaa.icon('phoneOff');
+  paintCallCtls();
+  $('mMeet').innerHTML = Liqaa.icon('video') + '<span>' + Liqaa.escapeHtml(T('mMeet')) + '</span>';
+  $('mClear').innerHTML = Liqaa.icon('trash') + '<span>' + Liqaa.escapeHtml(T('mClear')) + '</span>';
+  $('mBlock').innerHTML = Liqaa.icon('ban') + '<span>' + Liqaa.escapeHtml(T('mBlock')) + '</span>';
+  $('incAccept').textContent = T('accept');
+  $('incDecline').textContent = T('decline');
+}
+
+$('cName').textContent = friend.name || themUser;
+$('cUser').textContent = '@' + themUser;
+$('cAvatar').textContent = Liqaa.initials(friend.name || themUser);
+paintIcons();
+Liqaa.bindMenu('moreBtn', 'moreMenu');
+
+function renderStatus() {
+  const key = 'st' + friendStatus.charAt(0).toUpperCase() + friendStatus.slice(1);
+  $('cStatus').textContent = T(key);
+  $('cDot').className = 'dot st-' + friendStatus;
+}
+async function refreshStatus() {
+  try {
+    const p = await probeUser(themUser, 'st', 1800);
+    friendStatus = p.online ? (p.status || 'active') : 'offline';
+    if (p.online && p.name) {
+      friend.name = p.name;
+      $('cName').textContent = p.name;
+      $('cAvatar').textContent = Liqaa.initials(p.name);
+    }
+  } catch (e) { friendStatus = 'offline'; }
+  renderStatus();
+}
+renderStatus();
+
+/* ---------- messages ---------- */
+const msgsEl = $('msgs');
+function nowTime() { return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+function statusLine(msg, err) {
+  const el = $('statusLine');
+  el.textContent = msg || '';
+  el.className = 'status-line' + (err ? ' err' : '');
+}
+function clearEmpty() { const e = msgsEl.querySelector('.bub.sys.ph'); if (e) e.remove(); }
+
+function addMsg(m) {
+  clearEmpty();
+  const div = document.createElement('div');
+  if (m.who === 'sys') {
+    div.className = 'bub sys';
+    div.textContent = m.text;
+  } else {
+    div.className = 'bub ' + (m.who === 'me' ? 'me' : 'them');
+    if (m.kind === 'image' && m.url) {
+      const img = document.createElement('img'); img.className = 'chat-img'; img.src = m.url; img.alt = m.name || ''; div.appendChild(img);
+    } else if (m.kind === 'video' && m.url) {
+      const v = document.createElement('video'); v.className = 'chat-vid'; v.controls = true; v.src = m.url; div.appendChild(v);
+    } else if (m.kind === 'file' || m.kind === 'image' || m.kind === 'video') {
+      const chip = document.createElement('div');
+      chip.className = 'file-chip';
+      chip.innerHTML = Liqaa.icon('text') + '<div class="finfo"><div class="fname"></div><div class="fsize"></div></div>';
+      chip.querySelector('.fname').textContent = m.name || 'file';
+      chip.querySelector('.fsize').textContent = m.size ? (m.size / 1024).toFixed(0) + ' KB' : '';
+      if (m.url) {
+        const dl = document.createElement('a');
+        dl.href = m.url; dl.download = m.name || 'file';
+        dl.innerHTML = Liqaa.icon('download');
+        chip.appendChild(dl);
+      }
+      div.appendChild(chip);
+    } else {
+      div.appendChild(document.createTextNode(m.text || ''));
+    }
+    const t = document.createElement('span');
+    t.className = 't'; t.dir = 'ltr'; t.textContent = m.time || '';
+    div.appendChild(t);
+  }
+  msgsEl.appendChild(div);
+  msgsEl.scrollTop = msgsEl.scrollHeight;
+}
+function persist(m) {
+  const h = getChatHistory(myUser, themUser);
+  h.push({ who: m.who, text: m.text, time: m.time, at: Date.now(), kind: m.kind || 'text', name: m.name, size: m.size });
+  saveChatHistory(myUser, themUser, h);
+}
+function renderHistory() {
+  const h = getChatHistory(myUser, themUser);
+  msgsEl.innerHTML = '';
+  if (!h.length) {
+    const d = document.createElement('div');
+    d.className = 'bub sys ph';
+    d.textContent = T('emptyChat');
+    msgsEl.appendChild(d);
+    return;
+  }
+  h.forEach(m => {
+    if (m.kind && m.kind !== 'text') addMsg({ who: m.who, kind: 'file', name: m.name || 'file', size: m.size, time: m.time });
+    else addMsg({ who: m.who, text: m.text, time: m.time });
+  });
+}
+renderHistory();
+
+function pub(obj) {
+  try {
+    if (room && room.localParticipant) {
+      room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(obj)), 0, []);
+    }
+  } catch (e) { console.error('[Liqaa] pub failed', e); }
+}
+
+function sendText() {
+  const text = $('chatInput').value.trim();
+  if (!text) return;
+  if (friendStatus === 'away') { statusLine(T('awayMsg'), true); return; }
+  if (friendStatus === 'offline') { statusLine(T('offlineMsg'), true); return; }
+  $('chatInput').value = '';
+  statusLine('');
+  const m = { who: 'me', text, time: nowTime() };
+  addMsg(m); persist(m);
+  pub({ type: 'text', text, time: m.time });
+  if (Date.now() - lastMsgNotify > 60000) {
+    pushNotify(themUser, { from: myUser, fromName: meName, type: 'msg', text: text.slice(0, 60) });
+    lastMsgNotify = Date.now();
+  }
+}
+$('chatSend').addEventListener('click', sendText);
+$('chatInput').addEventListener('keydown', e => { if (e.key === 'Enter') sendText(); });
+
+/* ---------- emoji ---------- */
+const EMOJIS = ['😀','😄','😂','🤣','🙂','😉','😍','🥰','😘','😎','🤩','🥳','😅','😭','😢','😡','🤔','🤗','🤫','🙌','😇','😴','😱','🤯','👍','👎','👏','🙏','🤝','💪','❤️','🧡','💛','💚','🔥','✨','🎉','🎊','🎁','🎂','☕','🍕','⚽','🏆','💡','📌','✅','⏰','💬','🚀'];
+$('emojiPop').innerHTML = EMOJIS.map(e => '<button type="button" aria-label="' + e + '">' + e + '</button>').join('');
+$('emojiPop').querySelectorAll('button').forEach(b =>
+  b.addEventListener('click', () => { $('chatInput').value += b.textContent; $('chatInput').focus(); }));
+$('emojiBtn').addEventListener('click', e => { e.stopPropagation(); $('emojiPop').classList.toggle('open'); });
+document.addEventListener('click', e => {
+  if (!e.target.closest('#emojiPop') && !e.target.closest('#emojiBtn')) $('emojiPop').classList.remove('open');
+});
+
+/* ---------- files ---------- */
+const pendingFiles = new Map();
+const CHUNK = 20000;
+function pubData(obj) {
+  if (!room || !room.localParticipant) throw new Error('no room');
+  room.localParticipant.publishData(new TextEncoder().encode(JSON.stringify(obj)), 0, []);
+}
+function processFile(file) {
+  return new Promise((resolve, reject) => {
+    if (file.type && file.type.startsWith('image/')) {
+      const url = URL.createObjectURL(file);
+      const img = new Image();
+      img.onload = function () {
+        try {
+          const maxDim = 1280;
+          let w = img.naturalWidth, h = img.naturalHeight;
+          if (w > maxDim || h > maxDim) { const sc = Math.min(maxDim / w, maxDim / h); w = Math.round(w * sc); h = Math.round(h * sc); }
+          const c = document.createElement('canvas');
+          c.width = w; c.height = h;
+          c.getContext('2d').drawImage(img, 0, 0, w, h);
+          resolve({ name: file.name, mime: 'image/jpeg', b64: c.toDataURL('image/jpeg', 0.78).split(',')[1], size: file.size });
+        } catch (e) { reject(e); }
+        URL.revokeObjectURL(url);
+      };
+      img.onerror = reject;
+      img.src = url;
+    } else {
+      const reader = new FileReader();
+      reader.onload = function () {
+        const dataUrl = reader.result || '';
+        resolve({ name: file.name, mime: file.type || 'application/octet-stream', b64: String(dataUrl).split(',')[1] || '', size: file.size });
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    }
+  });
+}
+async function sendFileItem(item) {
+  const id = Math.random().toString(36).slice(2, 10);
+  const total = Math.max(1, Math.ceil(item.b64.length / CHUNK));
+  pubData({ type: 'filebegin', id, name: item.name, mime: item.mime, size: item.size, time: nowTime() });
+  for (let i = 0; i < total; i++) {
+    pubData({ type: 'filechunk', id, idx: i, data: item.b64.slice(i * CHUNK, (i + 1) * CHUNK) });
+    statusLine(T('fileSending', { n: (i + 1) + '/' + total }));
+    await new Promise(r => setTimeout(r, 0));
+  }
+  pubData({ type: 'fileend', id });
+  statusLine(T('fileSent'));
+  setTimeout(() => statusLine(''), 2500);
+}
+$('fileBtn').addEventListener('click', () => $('fileInput').click());
+$('fileInput').addEventListener('change', async function () {
+  const files = Array.from(this.files || []);
+  this.value = '';
+  for (const f of files) {
+    try {
+      if (f.size > 8 * 1024 * 1024) { statusLine(T('fileTooBig') + ': ' + f.name, true); continue; }
+      if (friendStatus === 'offline') { statusLine(T('offlineMsg'), true); continue; }
+      const item = await processFile(f);
+      const bin = atob(item.b64);
+      const bytes = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+      const url = URL.createObjectURL(new Blob([bytes], { type: item.mime }));
+      const kind = item.mime.startsWith('image/') ? 'image' : (item.mime.startsWith('video/') ? 'video' : 'file');
+      addMsg({ who: 'me', kind, name: f.name, size: f.size, url, time: nowTime() });
+      persist({ who: 'me', kind: 'file', name: f.name, size: f.size, time: nowTime() });
+      await sendFileItem(item);
+    } catch (e) {
+      console.error('[Liqaa] file error:', e);
+      statusLine(T('fileFail') + ': ' + f.name, true);
+    }
+  }
+});
+function assembleFile(pf) {
+  try {
+    const bin = atob(pf.parts.join(''));
+    const bytes = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([bytes], { type: pf.mime }));
+    const kind = pf.mime.startsWith('image/') ? 'image' : (pf.mime.startsWith('video/') ? 'video' : 'file');
+    addMsg({ who: 'them', kind, name: pf.name, size: pf.size, url, time: pf.time });
+    persist({ who: 'them', kind: 'file', name: pf.name, size: pf.size, time: pf.time });
+  } catch (e) { console.error('[Liqaa] assemble error:', e); }
+}
+
+/* ---------- incoming data ---------- */
+function onData(payload) {
+  let m;
+  try { m = JSON.parse(new TextDecoder().decode(payload)); } catch (e) { return; }
+  if (m.type === 'text') {
+    const m2 = { who: 'them', text: m.text, time: m.time };
+    addMsg(m2); persist(m2);
+  } else if (m.type === 'filebegin') {
+    pendingFiles.set(m.id, { name: m.name, mime: m.mime, size: m.size, parts: [], time: m.time });
+  } else if (m.type === 'filechunk') {
+    const pf = pendingFiles.get(m.id);
+    if (pf) pf.parts.push(m.data);
+  } else if (m.type === 'fileend') {
+    const pf = pendingFiles.get(m.id);
+    if (pf) { pendingFiles.delete(m.id); assembleFile(pf); }
+  } else if (m.type === 'call') {
+    if (callState === 'none') { callState = 'incoming'; callKind = m.kind || 'voice'; showIncoming(); }
+  } else if (m.type === 'call-accept') {
+    if (callState === 'outgoing') startActive(m.kind || callKind);
+  } else if (m.type === 'call-decline') {
+    if (callState === 'outgoing') {
+      callState = 'none';
+      callBtnActive(callKind, false);
+      if (ringingTimer) { clearTimeout(ringingTimer); ringingTimer = null; }
+      addMsg({ who: 'sys', text: T('declined') });
+      statusLine('');
+    }
+  } else if (m.type === 'call-end') {
+    endCall(false);
+  }
+}
+
+/* ---------- calls ---------- */
+function callBtnActive(kind, on) {
+  const b = kind === 'video' ? $('videoBtn') : $('voiceBtn');
+  b.classList.toggle('active', on);
+  b.setAttribute('aria-pressed', String(!!on));
+}
+function paintCallCtls() {
+  const micOn = !!(room && room.localParticipant && room.localParticipant.isMicrophoneEnabled);
+  const camOn = !!(room && room.localParticipant && room.localParticipant.isCameraEnabled);
+  $('callMic').innerHTML = Liqaa.icon(micOn ? 'mic' : 'micOff');
+  $('callMic').classList.toggle('off', !micOn);
+  $('callMic').title = T(micOn ? 'micOff' : 'micOn');
+  $('callMic').setAttribute('aria-label', $('callMic').title);
+  $('callCam').innerHTML = Liqaa.icon(camOn ? 'cam' : 'camOff');
+  $('callCam').classList.toggle('off', !camOn);
+  $('callCam').title = T(camOn ? 'camOff' : 'camOn');
+  $('callCam').setAttribute('aria-label', $('callCam').title);
+}
+
+async function startCall(kind) {
+  if (callState !== 'none') return;
+  callKind = kind;
+  statusLine(T('voiceRinging'));
+  let p = { online: false };
+  try { p = await probeUser(themUser, 'call', 1800); } catch (e) {}
+  friendStatus = p.online ? (p.status || 'active') : 'offline';
+  renderStatus();
+  if (!p.online) { statusLine(T('offlineMsg'), true); return; }
+  if (p.status === 'away') { statusLine(T('awayMsg'), true); return; }
+  if (p.status === 'busy') {
+    pushNotify(themUser, { from: myUser, fromName: meName, type: 'busy', text: T('busyNotify') });
+    statusLine(T('busyTrying'));
+  } else {
+    statusLine(kind === 'video' ? T('videoRinging') : T('voiceRinging'));
+  }
+  pub({ type: 'call', kind });
+  pushNotify(themUser, { from: myUser, fromName: meName, type: 'call', text: kind === 'video' ? T('videoCallNotify') : T('voiceCallNotify') });
+  callState = 'outgoing';
+  callBtnActive(kind, true);
+  ringingTimer = setTimeout(() => {
+    if (callState === 'outgoing') { endCall(false); statusLine(T('noAnswer'), true); }
+  }, 25000);
+}
+
+function showIncoming() {
+  $('incAvatar').textContent = Liqaa.initials(friend.name || themUser);
+  $('incText').textContent = T('incoming');
+  $('incSub').textContent = (friend.name || themUser) + ' — ' + T(callKind === 'video' ? 'video' : 'voice');
+  $('incoming').classList.add('show');
+}
+$('incAccept').addEventListener('click', () => {
+  $('incoming').classList.remove('show');
+  pub({ type: 'call-accept', kind: callKind });
+  startActive(callKind);
+});
+$('incDecline').addEventListener('click', () => {
+  $('incoming').classList.remove('show');
+  pub({ type: 'call-decline' });
+  callState = 'none';
+  callBtnActive(callKind, false);
+});
+
+async function startActive(kind) {
+  callState = 'active';
+  callBtnActive(kind, true);
+  if (ringingTimer) { clearTimeout(ringingTimer); ringingTimer = null; }
+  statusLine('');
+  $('callArea').classList.add('on');
+  $('callStatus').textContent = kind === 'video' ? T('videoCallOn') : T('voiceCallOn');
+  if (kind === 'voice') {
+    $('callStage').innerHTML = '<div class="voice-avatar">' + Liqaa.escapeHtml(Liqaa.initials(friend.name || themUser)) + '</div>';
+  }
+  $('pipPh').textContent = Liqaa.initials(meName);
+  try {
+    await room.localParticipant.setMicrophoneEnabled(true);
+    if (kind === 'video') await room.localParticipant.setCameraEnabled(true);
+  } catch (e) { Liqaa.toast(Liqaa.mediaErrorMessage(e), 'error'); }
+  paintCallCtls();
+}
+
+function endCall(byMe) {
+  if (callState === 'none') return;
+  if (byMe) pub({ type: 'call-end' });
+  if (ringingTimer) { clearTimeout(ringingTimer); ringingTimer = null; }
+  $('incoming').classList.remove('show');
+  $('callArea').classList.remove('on');
+  callBtnActive(callKind, false);
+  callState = 'none';
+  try { room && room.localParticipant.setMicrophoneEnabled(false); } catch (e) {}
+  try { room && room.localParticipant.setCameraEnabled(false); } catch (e) {}
+  $('callStage').innerHTML = '';
+  $('pipMedia').innerHTML = '';
+  $('pipPh').style.display = '';
+  addMsg({ who: 'sys', text: T('callEnded') });
+  paintCallCtls();
+}
+
+$('voiceBtn').addEventListener('click', () => startCall('voice'));
+$('videoBtn').addEventListener('click', () => startCall('video'));
+$('callEndBtn').addEventListener('click', () => endCall(true));
+$('callMic').addEventListener('click', async () => {
+  if (!room) return;
+  try { await room.localParticipant.setMicrophoneEnabled(!room.localParticipant.isMicrophoneEnabled); }
+  catch (e) { Liqaa.toast(Liqaa.mediaErrorMessage(e), 'error'); }
+  paintCallCtls();
+});
+$('callCam').addEventListener('click', async () => {
+  if (!room) return;
+  try { await room.localParticipant.setCameraEnabled(!room.localParticipant.isCameraEnabled); }
+  catch (e) { Liqaa.toast(Liqaa.mediaErrorMessage(e), 'error'); }
+  paintCallCtls();
+});
+
+/* ---------- overflow menu ---------- */
+$('mMeet').addEventListener('click', () => {
+  Liqaa.closeAllMenus();
+  const rec = createMeeting({ name: (Liqaa.lang() === 'ar' ? 'اجتماع مع ' : 'Meeting with ') + (friend.name || themUser), host: (getSession() || {}).email || '' });
+  pushNotify(themUser, { from: myUser, fromName: meName, type: 'call', text: meetingLink(rec.code), room: rec.code });
+  location.href = 'prejoin.html?room=' + encodeURIComponent(rec.code);
+});
+$('mClear').addEventListener('click', async () => {
+  Liqaa.closeAllMenus();
+  const ok = await Liqaa.confirm({ title: T('clearTitle'), message: T('clearMsg'), confirmText: T('clearYes'), cancelText: T('cancel'), danger: true });
+  if (!ok) return;
+  saveChatHistory(myUser, themUser, []);
+  renderHistory();
+  Liqaa.toast(T('cleared'), 'ok');
+});
+$('mBlock').addEventListener('click', async () => {
+  Liqaa.closeAllMenus();
+  const ok = await Liqaa.confirm({ title: T('blockTitle'), message: T('blockMsg'), confirmText: T('blockYes'), cancelText: T('cancel'), danger: true });
+  if (!ok) return;
+  blockUser({ username: themUser, name: friend.name || themUser });
+  removeFriend(themUser);
+  Liqaa.toast(T('blocked'), 'ok');
+  setTimeout(() => location.href = 'contacts.html', 700);
+});
+
+/* ---------- DM room ---------- */
+async function joinDM() {
+  try {
+    room = new Room({ adaptiveStream: true, dynacast: true });
+    room.on(RoomEvent.DataReceived, onData);
+    room.on(RoomEvent.TrackSubscribed, (track, publication, p) => {
+      if (p.isLocal) return;
+      const el = track.attach();
+      if (track.kind !== 'video') { el.style.display = 'none'; $('callStage').appendChild(el); return; }
+      $('callStage').querySelectorAll('video,.voice-avatar').forEach(v => v.remove());
+      $('callStage').appendChild(el);
+    });
+    room.on(RoomEvent.TrackUnsubscribed, (track) => { track.detach().forEach(el => el.remove()); });
+    room.localParticipant.on(ParticipantEvent.LocalTrackPublished, (publication) => {
+      if (publication.track && publication.track.kind === 'video') {
+        $('pipMedia').appendChild(publication.track.attach());
+        $('pipPh').style.display = 'none';
+      }
+      paintCallCtls();
+    });
+    room.localParticipant.on(ParticipantEvent.LocalTrackUnpublished, (publication) => {
+      if (publication.track) publication.track.detach().forEach(el => el.remove());
+      if (!$('pipMedia').querySelector('video')) $('pipPh').style.display = '';
+      paintCallCtls();
+    });
+    const token = await makeToken(DM, identity, meName);
+    await room.connect(LIVEKIT_CONFIG.url, token);
+  } catch (e) {
+    console.error('[Liqaa] dm join failed:', e);
+    statusLine(T('offlineMsg'), true);
+  }
+}
+
+window.addEventListener('pagehide', () => { try { room && room.disconnect(); } catch (e) {} });
+
+document.addEventListener('liqaa:lang', () => { paintIcons(); renderStatus(); renderHistory(); });
+
+/* ---------- go ---------- */
+if (myUser && themUser) {
+  joinDM().then(() => {
+    refreshStatus().then(() => {
+      if (autoCall === 'video' || autoCall === 'voice') setTimeout(() => startCall(autoCall), 500);
+    });
+  });
+  setInterval(refreshStatus, 45000);
+}
+</script>
+</body>
+</html>

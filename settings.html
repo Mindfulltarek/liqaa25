@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>الإعدادات — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .set-layout { display: grid; grid-template-columns: 232px 1fr; gap: var(--sp-4); align-items: start; }
+  .set-nav {
+    position: sticky; top: calc(var(--nav-h) + 16px);
+    display: flex; flex-direction: column; gap: 2px;
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--r-lg); padding: 8px;
+  }
+  .set-nav button {
+    display: flex; align-items: center; gap: 10px; width: 100%; text-align: start;
+    padding: 11px 13px; border-radius: var(--r-sm); border: 0; background: transparent;
+    color: var(--muted); font-family: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer;
+    transition: background var(--t-fast) var(--ease), color var(--t-fast) var(--ease);
+  }
+  .set-nav button svg { width: 18px; height: 18px; flex: none; }
+  .set-nav button:hover { background: var(--glass); color: var(--text); }
+  .set-nav button.active { background: var(--tint); color: var(--c1); }
+  .set-body { display: flex; flex-direction: column; gap: var(--sp-4); min-width: 0; }
+  .set-sec { scroll-margin-top: calc(var(--nav-h) + 20px); }
+  .set-sec > h2 { font-size: 19px; margin-bottom: 4px; }
+  .set-sec > .sub { color: var(--muted); font-size: 14px; margin-bottom: var(--sp-3); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .prof-head { display: flex; align-items: center; gap: 16px; margin-bottom: var(--sp-3); flex-wrap: wrap; }
+  .profile-photo { position: relative; width: 64px; height: 64px; flex: none; }
+  .profile-photo .avatar { width: 64px; height: 64px; }
+  .photo-edit { position: absolute; inset-inline-end: -4px; bottom: -3px; width: 27px; height: 27px; border-radius: 50%; display: grid; place-items: center; background: var(--grad); color: #fff; border: 2px solid var(--card); box-shadow: var(--shadow-sm); }
+  .photo-edit svg { width: 13px; height: 13px; }
+  .danger-card { border-color: rgba(248, 113, 113, .32); }
+  .save-bar { display: flex; justify-content: flex-end; gap: 10px; margin-top: var(--sp-3); }
+  .lvl { display: flex; align-items: center; gap: 9px; }
+  .lvl > span:first-child { flex: none; color: var(--muted); }
+  .lvl svg { width: 18px; height: 18px; display: block; }
+  .meter { flex: 1; height: 8px; border-radius: 99px; background: var(--glass); overflow: hidden; border: 1px solid var(--border); }
+  .meter i { display: block; height: 100%; width: 0%; background: var(--grad); transition: width 90ms linear; }
+  video.prev {
+    width: 100%; max-width: 380px; aspect-ratio: 16/9; border-radius: var(--r-md);
+    background: #000; object-fit: cover; transform: scaleX(-1); border: 1px solid var(--border);
+  }
+  @media (max-width: 900px) {
+    .set-layout { grid-template-columns: 1fr; }
+    .set-nav { position: static; flex-direction: row; overflow-x: auto; }
+    .set-nav button { white-space: nowrap; }
+    .grid2 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body class="app">
+<div id="appShell"></div>
+
+<main id="main">
+  <div class="container wide page">
+    <div style="margin-bottom:var(--sp-4)" class="anim-in">
+      <h1 style="font-size:clamp(24px,3vw,30px);font-weight:900" data-i18n="pTitle">الإعدادات</h1>
+      <p class="muted" style="margin-top:4px" data-i18n="pSub">اضبط حسابك وأجهزتك وخصوصيتك</p>
+    </div>
+
+    <div class="set-layout">
+      <nav class="set-nav" id="setNav" aria-label="Settings sections">
+        <button type="button" data-sec="account" class="active"><span data-icon="user"></span><span data-i18n="sAccount">الحساب</span></button>
+        <button type="button" data-sec="security"><span data-icon="shield"></span><span data-i18n="sSecurity">الأمان</span></button>
+        <button type="button" data-sec="av"><span data-icon="mic"></span><span data-i18n="sAV">الصوت والفيديو</span></button>
+        <button type="button" data-sec="notifs"><span data-icon="bell"></span><span data-i18n="sNotifs">الإشعارات</span></button>
+        <button type="button" data-sec="privacy"><span data-icon="lock"></span><span data-i18n="sPrivacy">الخصوصية</span></button>
+        <button type="button" data-sec="ai"><span data-icon="sparkles"></span><span data-i18n="sAI">الذكاء الاصطناعي</span></button>
+        <button type="button" data-sec="blocked"><span data-icon="ban"></span><span data-i18n="sBlocked">المحظورون</span></button>
+        <button type="button" data-sec="danger"><span data-icon="alert"></span><span data-i18n="sDanger">منطقة الخطر</span></button>
+      </nav>
+
+      <div class="set-body">
+
+        <!-- ACCOUNT -->
+        <section class="set-sec" id="account">
+          <h2 data-i18n="sAccount">الحساب</h2>
+          <p class="sub" data-i18n="accSub">بياناتك الأساسية اللي بتظهر للمشاركين معاك</p>
+          <div class="card">
+            <div class="prof-head">
+              <span class="profile-photo"><span class="avatar lg" id="profAvatar">?</span><button class="photo-edit" id="photoEdit" type="button" aria-label="Edit photo"></button><input id="avatarInput" type="file" accept="image/*" hidden></span>
+              <div>
+                <div style="font-weight:900;font-size:18px" id="profName">—</div>
+                <div class="muted small" id="profMail">—</div>
+              </div>
+            </div>
+            <form id="accForm" class="stack g3" novalidate>
+              <div class="grid2">
+                <div class="field">
+                  <label class="label" for="acFirst" data-i18n="firstName">الاسم الأول</label>
+                  <input class="input" id="acFirst" maxlength="30" autocomplete="given-name">
+                </div>
+                <div class="field">
+                  <label class="label" for="acLast" data-i18n="lastName">اسم العائلة</label>
+                  <input class="input" id="acLast" maxlength="30" autocomplete="family-name">
+                </div>
+              </div>
+              <div class="field">
+                <label class="label" for="acUsername" data-i18n="usernameL">معرّف المستخدم</label>
+                <input class="input" id="acUsername" dir="ltr" maxlength="20" autocomplete="off" placeholder="username">
+                <p class="hint" data-i18n="usernameHint">ده اللي أصحابك بيضيفوك بيه. حروف إنجليزية صغيرة وأرقام و . _ من 3 لـ 20 حرف.</p>
+              </div>
+              <div class="field">
+                <label class="label" for="acEmail" data-i18n="emailLabel">البريد الإلكتروني</label>
+                <input class="input" id="acEmail" type="email" disabled dir="ltr">
+                <p class="hint" data-i18n="emailLocked">مش ممكن تغيير البريد في النسخة دي.</p>
+              </div>
+              <p class="err-msg" id="accErr"></p>
+              <div class="save-bar">
+                <button class="btn btn-primary" type="submit" id="accSave" data-i18n="save">حفظ</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- SECURITY -->
+        <section class="set-sec" id="security">
+          <h2 data-i18n="sSecurity">الأمان</h2>
+          <p class="sub" data-i18n="secSub">غيّر كلمة المرور بتاعتك وراجع جلستك</p>
+          <div class="card">
+            <form id="pwForm" class="stack g3" novalidate>
+              <div class="field">
+                <label class="label" for="pwOld" data-i18n="oldPass">كلمة المرور الحالية</label>
+                <div class="input-group">
+                  <input class="input" id="pwOld" type="password" autocomplete="current-password">
+                  <button class="in-btn" type="button" data-eye="pwOld" aria-label="إظهار كلمة المرور"></button>
+                </div>
+              </div>
+              <div class="grid2">
+                <div class="field">
+                  <label class="label" for="pwNew" data-i18n="newPass">كلمة المرور الجديدة</label>
+                  <div class="input-group">
+                    <input class="input" id="pwNew" type="password" autocomplete="new-password">
+                    <button class="in-btn" type="button" data-eye="pwNew" aria-label="إظهار كلمة المرور"></button>
+                  </div>
+                </div>
+                <div class="field">
+                  <label class="label" for="pwConf" data-i18n="confirmPass">تأكيد كلمة المرور</label>
+                  <div class="input-group">
+                    <input class="input" id="pwConf" type="password" autocomplete="new-password">
+                    <button class="in-btn" type="button" data-eye="pwConf" aria-label="إظهار كلمة المرور"></button>
+                  </div>
+                </div>
+              </div>
+              <p class="hint" data-i18n="pwHint">8 أحرف على الأقل، وتحتوي على حرف كبير وحرف صغير ورقم.</p>
+              <p class="err-msg" id="pwErr"></p>
+              <div class="save-bar">
+                <button class="btn btn-primary" type="submit" id="pwSave" data-i18n="changePass">تغيير كلمة المرور</button>
+              </div>
+            </form>
+            <hr class="panel-divider">
+            <div class="toggle-row">
+              <span class="toggle-txt">
+                <b data-i18n="signOutT">تسجيل الخروج من الجهاز ده</b>
+                <span class="hint" data-i18n="signOutH">هيقفل الجلسة الحالية ويرجعك لصفحة الدخول.</span>
+              </span>
+              <button class="btn btn-secondary btn-sm" type="button" id="logoutBtn2" data-i18n="logout">تسجيل الخروج</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- AUDIO & VIDEO -->
+        <section class="set-sec" id="av">
+          <h2 data-i18n="sAV">الصوت والفيديو</h2>
+          <p class="sub" data-i18n="avSub">اختر أجهزتك واختبرها قبل ما تدخل أي اجتماع</p>
+          <div class="card stack g3">
+            <div class="grid2">
+              <div class="field">
+                <label class="label" for="camSel" data-i18n="camera">الكاميرا</label>
+                <select class="select" id="camSel"></select>
+              </div>
+              <div class="field">
+                <label class="label" for="micSel" data-i18n="microphone">الميكروفون</label>
+                <select class="select" id="micSel"></select>
+              </div>
+            </div>
+            <div class="field">
+              <label class="label" for="spkSel" data-i18n="speaker">السماعة</label>
+              <select class="select" id="spkSel"></select>
+              <p class="hint" id="spkHint" hidden data-i18n="spkUnsupported">متصفحك مش بيدعم اختيار السماعة — هيستخدم سماعة النظام الافتراضية.</p>
+            </div>
+
+            <hr class="panel-divider">
+
+            <div class="row wrap" style="gap:12px">
+              <button class="btn btn-secondary" type="button" id="testBtn"><span data-icon="cam"></span><span data-i18n="testDevices">اختبار الكاميرا والمايك</span></button>
+              <button class="btn btn-ghost" type="button" id="stopTestBtn" hidden><span data-icon="close"></span><span data-i18n="stopTest">إيقاف الاختبار</span></button>
+            </div>
+            <div id="testArea" hidden class="stack g3">
+              <video class="prev" id="prevVideo" autoplay playsinline muted></video>
+              <div class="lvl">
+                <span data-icon="mic" style="color:var(--muted);display:grid;place-items:center"></span>
+                <span class="meter"><i id="lvlBar"></i></span>
+              </div>
+              <p class="hint" data-i18n="testHint">اتكلم شوية — لو البار بيتحرك يبقى المايك شغال.</p>
+            </div>
+            <p class="err-msg" id="avErr"></p>
+
+            <hr class="panel-divider">
+
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="joinMicT">ادخل الاجتماعات والمايك مفتوح</b>
+                <span class="hint" data-i18n="joinMicH">لو قفلته هتدخل صامت وتفتح المايك بنفسك.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="joinWithMicOn" aria-checked="true" aria-label="Join with mic on"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="joinCamT">ادخل الاجتماعات والكاميرا مفتوحة</b>
+                <span class="hint" data-i18n="joinCamH">تقدر تغيّرها كمان من شاشة ما قبل الدخول.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="joinWithCamOn" aria-checked="true" aria-label="Join with camera on"></button>
+            </div>
+          </div>
+        </section>
+
+        <!-- NOTIFICATIONS -->
+        <section class="set-sec" id="notifs">
+          <h2 data-i18n="sNotifs">الإشعارات</h2>
+          <p class="sub" data-i18n="notSub">اختار إمتى لقاء يبعتلك تنبيه</p>
+          <div class="card">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="notInvT">دعوات الاجتماعات</b>
+                <span class="hint" data-i18n="notInvH">تنبيه لما حد يدعوك لاجتماع أو يبعتلك طلب إضافة.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="notifyInvites" aria-checked="true" aria-label="Meeting invites"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="notMsgT">الرسائل الجديدة</b>
+                <span class="hint" data-i18n="notMsgH">تنبيه لما توصلك رسالة من جهة اتصال.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="notifyReminders" aria-checked="true" aria-label="New messages"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="notSndT">أصوات التنبيه</b>
+                <span class="hint" data-i18n="notSndH">صوت خفيف مع الإشعارات داخل التطبيق.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="notifySounds" aria-checked="true" aria-label="Notification sounds"></button>
+            </div>
+            <hr class="panel-divider">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="clearNotT">مسح كل الإشعارات</b>
+                <span class="hint" data-i18n="clearNotH">هيشيل الإشعارات المخزّنة على الجهاز ده.</span></span>
+              <button class="btn btn-secondary btn-sm" type="button" id="clearNotifs" data-i18n="clearNow">مسح الآن</button>
+            </div>
+          </div>
+        </section>
+
+        <!-- PRIVACY -->
+        <section class="set-sec" id="privacy">
+          <h2 data-i18n="sPrivacy">الخصوصية</h2>
+          <p class="sub" data-i18n="privSub">تحكّم في اللي الناس تقدر تشوفه عنك</p>
+          <div class="card">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="privOnT">إظهار حالة الاتصال</b>
+                <span class="hint" data-i18n="privOnH">جهات اتصالك هيشوفوا إنك متصل دلوقتي.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="showOnlineStatus" aria-checked="true" aria-label="Show online status"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="privReqT">استقبال طلبات الإضافة</b>
+                <span class="hint" data-i18n="privReqH">لو قفلتها، مش هتوصلك طلبات إضافة جديدة.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="allowContactRequests" aria-checked="true" aria-label="Allow contact requests"></button>
+            </div>
+            <hr class="panel-divider">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="privDataT">بياناتك محفوظة على جهازك</b>
+                <span class="hint" data-i18n="privDataH">الحساب والاجتماعات وجهات الاتصال متخزّنة محليًا في المتصفح. مسح بيانات المتصفح هيمسحها.</span></span>
+              <a class="btn btn-ghost btn-sm" href="privacy.html" data-i18n="readPolicy">سياسة الخصوصية</a>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI -->
+        <section class="set-sec" id="ai">
+          <h2 data-i18n="sAI">الذكاء الاصطناعي</h2>
+          <p class="sub" data-i18n="aiSub">مميزات مساعدة داخل الاجتماع — تشتغل بس لما تفعّلها</p>
+          <div class="card">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="aiTrT">التفريغ النصي المباشر</b>
+                <span class="hint" data-i18n="aiTrH">تحويل الكلام لنص داخل الاجتماع باستخدام تعرّف الكلام في المتصفح.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="aiTranscription" aria-checked="false" aria-label="Live transcription"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="aiSumT">ملخص الاجتماع</b>
+                <span class="hint" data-i18n="aiSumH">نقاط أساسية ومهام وقرارات مستخرجة من التفريغ النصي.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="aiSummaries" aria-checked="false" aria-label="Meeting summary"></button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="aiKeepT">الاحتفاظ بالنصوص بعد الاجتماع</b>
+                <span class="hint" data-i18n="aiKeepH">لو قفلتها، النص بيتمسح أول ما تسيب الاجتماع.</span></span>
+              <button class="toggle" type="button" role="switch" data-set="aiStoreData" aria-checked="false" aria-label="Keep transcripts"></button>
+            </div>
+            <hr class="panel-divider">
+            <p class="hint" data-i18n="aiDisc">تنويه: التفريغ النصي والملخص ممكن يكونوا غير دقيقين — راجعهم قبل ما تعتمد عليهم في أي قرار.</p>
+          </div>
+        </section>
+
+        <!-- BLOCKED -->
+        <section class="set-sec" id="blocked">
+          <h2 data-i18n="sBlocked">المستخدمون المحظورون</h2>
+          <p class="sub" data-i18n="blkSub">مش هيقدروا يبعتوا لك رسائل أو دعوات</p>
+          <div class="card flush" id="blkCard">
+            <div class="mtg-list" id="blkList"></div>
+          </div>
+        </section>
+
+        <!-- DANGER -->
+        <section class="set-sec" id="danger">
+          <h2 data-i18n="sDanger">منطقة الخطر</h2>
+          <p class="sub" data-i18n="dngSub">إجراءات مش ممكن التراجع عنها</p>
+          <div class="card danger-card">
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="clrHistT">مسح سجل الاجتماعات</b>
+                <span class="hint" data-i18n="clrHistH">هيشيل كل الاجتماعات من الجهاز ده. الروابط نفسها هتفضل شغالة.</span></span>
+              <button class="btn btn-secondary btn-sm" type="button" id="clearMeetings" data-i18n="clearNow">مسح الآن</button>
+            </div>
+            <div class="toggle-row">
+              <span class="toggle-txt"><b data-i18n="delAccT">حذف الحساب</b>
+                <span class="hint" data-i18n="delAccH">هيمسح حسابك وكل بياناتك المحفوظة على الجهاز ده نهائيًا.</span></span>
+              <button class="btn btn-danger btn-sm" type="button" id="delAccBtn" data-i18n="delAcc">حذف الحساب</button>
+            </div>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Delete account modal -->
+<div class="modal-scrim" id="delModal" role="dialog" aria-modal="true" aria-labelledby="delTitle">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="mt">
+        <h2 id="delTitle" data-i18n="delTitle">حذف الحساب نهائيًا؟</h2>
+        <p data-i18n="delMsg">هيتمسح حسابك واجتماعاتك وجهات اتصالك ورسائلك من الجهاز ده، والإجراء ده مش ممكن التراجع عنه.</p>
+      </div>
+      <button class="modal-close" type="button" data-close data-i18n-aria="close" aria-label="إغلاق"></button>
+    </div>
+    <form id="delForm" class="modal-body" novalidate>
+      <div class="field">
+        <label class="label" for="delConfirm" id="delLabel"></label>
+        <input class="input" id="delConfirm" dir="auto" autocomplete="off" data-autofocus>
+        <p class="err-msg" id="delErr"></p>
+      </div>
+      <div class="modal-foot">
+        <button class="btn btn-secondary" type="button" data-close data-i18n="cancel">إلغاء</button>
+        <button class="btn btn-danger" type="submit" id="delGo" data-i18n="delAcc">حذف الحساب</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="assets/firebase-auth.js"></script>
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import {
+  getSettings, saveSettings, getBlocked, unblockUser,
+  getUserRecord, saveUserRecord, getSession, getUsers, setUsers,
+  getFriends, clearNotifications, saveMeetings
+} from './liqaa-core.js';
+
+const DICT = {
+  ar: {
+    docTitle: "الإعدادات — لقاء",
+    pTitle: "الإعدادات", pSub: "اضبط حسابك وأجهزتك وخصوصيتك",
+    sAccount: "الحساب", sSecurity: "الأمان", sAV: "الصوت والفيديو", sNotifs: "الإشعارات",
+    sPrivacy: "الخصوصية", sAI: "الذكاء الاصطناعي", sBlocked: "المحظورون", sDanger: "منطقة الخطر",
+    accSub: "بياناتك الأساسية اللي بتظهر للمشاركين معاك",
+    firstName: "الاسم الأول", lastName: "اسم العائلة",
+    usernameL: "معرّف المستخدم",
+    usernameHint: "ده اللي أصحابك بيضيفوك بيه. حروف إنجليزية صغيرة وأرقام و . _ من 3 لـ 20 حرف.",
+    emailLabel: "البريد الإلكتروني", emailLocked: "مش ممكن تغيير البريد في النسخة دي.",
+    save: "حفظ", saving: "جارٍ الحفظ…", saved: "تم حفظ التغييرات",
+    errFirst: "اكتب اسمك الأول", errUsername: "اسم المستخدم لازم يكون 3–24 حرف إنجليزي صغير أو رقم أو _", errUsernameTaken: "اسم المستخدم ده مستخدم بالفعل", errUsernameWait: "يمكن تغيير اسم المستخدم مرة واحدة كل 7 أيام", photoTooLarge: "الصورة يجب أن تكون أقل من 2 ميجابايت", photoUpdated: "تم تحديث صورة البروفايل",
+    secSub: "غيّر كلمة المرور بتاعتك وراجع جلستك",
+    oldPass: "كلمة المرور الحالية", newPass: "كلمة المرور الجديدة", confirmPass: "تأكيد كلمة المرور",
+    pwHint: "8 أحرف على الأقل، وتحتوي على حرف كبير وحرف صغير ورقم.",
+    changePass: "تغيير كلمة المرور", changing: "جارٍ التغيير…", pwDone: "تم تغيير كلمة المرور",
+    errNoPass: "الحساب ده مالوش كلمة مرور محفوظة — اعمل واحدة جديدة من هنا.",
+    errOldWrong: "كلمة المرور الحالية غير صحيحة",
+    errWeak: "كلمة المرور الجديدة ضعيفة — راجع الشروط فوق",
+    errMismatch: "كلمتا المرور غير متطابقتين",
+    signOutT: "تسجيل الخروج من الجهاز ده", signOutH: "هيقفل الجلسة الحالية ويرجعك لصفحة الدخول.",
+    logout: "تسجيل الخروج",
+    avSub: "اختر أجهزتك واختبرها قبل ما تدخل أي اجتماع",
+    camera: "الكاميرا", microphone: "الميكروفون", speaker: "السماعة",
+    spkUnsupported: "متصفحك مش بيدعم اختيار السماعة — هيستخدم سماعة النظام الافتراضية.",
+    testDevices: "اختبار الكاميرا والمايك", stopTest: "إيقاف الاختبار",
+    testHint: "اتكلم شوية — لو البار بيتحرك يبقى المايك شغال.",
+    joinMicT: "ادخل الاجتماعات والمايك مفتوح", joinMicH: "لو قفلته هتدخل صامت وتفتح المايك بنفسك.",
+    joinCamT: "ادخل الاجتماعات والكاميرا مفتوحة", joinCamH: "تقدر تغيّرها كمان من شاشة ما قبل الدخول.",
+    notSub: "اختار إمتى لقاء يبعتلك تنبيه",
+    notInvT: "دعوات الاجتماعات", notInvH: "تنبيه لما حد يدعوك لاجتماع أو يبعتلك طلب إضافة.",
+    notMsgT: "الرسائل الجديدة", notMsgH: "تنبيه لما توصلك رسالة من جهة اتصال.",
+    notSndT: "أصوات التنبيه", notSndH: "صوت خفيف مع الإشعارات داخل التطبيق.",
+    clearNotT: "مسح كل الإشعارات", clearNotH: "هيشيل الإشعارات المخزّنة على الجهاز ده.",
+    clearNow: "مسح الآن", notifsCleared: "تم مسح الإشعارات",
+    privSub: "تحكّم في اللي الناس تقدر تشوفه عنك",
+    privOnT: "إظهار حالة الاتصال", privOnH: "جهات اتصالك هيشوفوا إنك متصل دلوقتي.",
+    privReqT: "استقبال طلبات الإضافة", privReqH: "لو قفلتها، مش هتوصلك طلبات إضافة جديدة.",
+    privDataT: "بياناتك محفوظة على جهازك",
+    privDataH: "الحساب والاجتماعات وجهات الاتصال متخزّنة محليًا في المتصفح. مسح بيانات المتصفح هيمسحها.",
+    readPolicy: "سياسة الخصوصية",
+    aiSub: "مميزات مساعدة داخل الاجتماع — تشتغل بس لما تفعّلها",
+    aiTrT: "التفريغ النصي المباشر", aiTrH: "تحويل الكلام لنص داخل الاجتماع باستخدام تعرّف الكلام في المتصفح.",
+    aiSumT: "ملخص الاجتماع", aiSumH: "نقاط أساسية ومهام وقرارات مستخرجة من التفريغ النصي.",
+    aiKeepT: "الاحتفاظ بالنصوص بعد الاجتماع", aiKeepH: "لو قفلتها، النص بيتمسح أول ما تسيب الاجتماع.",
+    aiDisc: "تنويه: التفريغ النصي والملخص ممكن يكونوا غير دقيقين — راجعهم قبل ما تعتمد عليهم في أي قرار.",
+    blkSub: "مش هيقدروا يبعتوا لك رسائل أو دعوات",
+    blkEmpty: "مفيش مستخدمين محظورين", blkEmptySub: "أي حد تحظره هيظهر هنا.",
+    unblock: "رفع الحظر", unblockTitle: "رفع الحظر؟", unblockMsg: "هيقدر يتواصل معاك تاني بعد رفع الحظر.",
+    unblocked: "تم رفع الحظر",
+    dngSub: "إجراءات مش ممكن التراجع عنها",
+    clrHistT: "مسح سجل الاجتماعات", clrHistH: "هيشيل كل الاجتماعات من الجهاز ده. الروابط نفسها هتفضل شغالة.",
+    clrHistTitle: "مسح كل سجل الاجتماعات؟", clrHistMsg: "مش هتقدر ترجعهم تاني على الجهاز ده.",
+    clrHistYes: "مسح الكل", histCleared: "تم مسح سجل الاجتماعات",
+    delAccT: "حذف الحساب", delAccH: "هيمسح حسابك وكل بياناتك المحفوظة على الجهاز ده نهائيًا.",
+    delAcc: "حذف الحساب", deleting: "جارٍ الحذف…",
+    delTitle: "حذف الحساب نهائيًا؟",
+    delMsg: "هيتمسح حسابك واجتماعاتك وجهات اتصالك ورسائلك من الجهاز ده، والإجراء ده مش ممكن التراجع عنه.",
+    delWord: "احذف",
+    delLabel: 'اكتب "احذف" للتأكيد',
+    errDelWord: 'لازم تكتب "احذف" بالظبط عشان نكمل',
+    cancel: "إلغاء", close: "إغلاق"
+  },
+  en: {
+    docTitle: "Settings — Liqaa",
+    pTitle: "Settings", pSub: "Manage your account, devices and privacy",
+    sAccount: "Account", sSecurity: "Security", sAV: "Audio & video", sNotifs: "Notifications",
+    sPrivacy: "Privacy", sAI: "AI features", sBlocked: "Blocked users", sDanger: "Danger zone",
+    accSub: "The basics other participants see about you",
+    firstName: "First name", lastName: "Last name",
+    usernameL: "Username",
+    usernameHint: "This is how people add you. Lowercase letters, numbers, dots or underscores, 3–20 characters.",
+    emailLabel: "Email address", emailLocked: "Email can't be changed in this version.",
+    save: "Save changes", saving: "Saving…", saved: "Changes saved",
+    errFirst: "Enter your first name", errUsername: "Usernames are 3–24 lowercase letters, numbers or underscores", errUsernameTaken: "This username is already taken", errUsernameWait: "You can change your username only once every 7 days", photoTooLarge: "Image must be smaller than 2 MB", photoUpdated: "Profile photo updated",
+    secSub: "Change your password and review this session",
+    oldPass: "Current password", newPass: "New password", confirmPass: "Confirm new password",
+    pwHint: "At least 8 characters, with an uppercase letter, a lowercase letter and a number.",
+    changePass: "Change password", changing: "Updating…", pwDone: "Password updated",
+    errNoPass: "This account has no saved password — set one here.",
+    errOldWrong: "Your current password is incorrect",
+    errWeak: "The new password is too weak — check the requirements above",
+    errMismatch: "The two passwords don't match",
+    signOutT: "Sign out of this device", signOutH: "Ends this session and takes you back to the login page.",
+    logout: "Log out",
+    avSub: "Pick your devices and test them before joining a meeting",
+    camera: "Camera", microphone: "Microphone", speaker: "Speaker",
+    spkUnsupported: "Your browser can't pick a speaker — it will use the system default.",
+    testDevices: "Test camera & mic", stopTest: "Stop test",
+    testHint: "Say something — if the bar moves, your mic is working.",
+    joinMicT: "Join meetings with mic on", joinMicH: "Turn it off to join muted and unmute yourself.",
+    joinCamT: "Join meetings with camera on", joinCamH: "You can still change this on the pre-join screen.",
+    notSub: "Choose when Liqaa should notify you",
+    notInvT: "Meeting invites", notInvH: "Get notified when someone invites you or sends a contact request.",
+    notMsgT: "New messages", notMsgH: "Get notified when a contact messages you.",
+    notSndT: "Notification sounds", notSndH: "A soft sound with in-app notifications.",
+    clearNotT: "Clear all notifications", clearNotH: "Removes notifications stored on this device.",
+    clearNow: "Clear now", notifsCleared: "Notifications cleared",
+    privSub: "Control what other people can see about you",
+    privOnT: "Show online status", privOnH: "Your contacts can see when you're online.",
+    privReqT: "Allow contact requests", privReqH: "Turn off to stop receiving new contact requests.",
+    privDataT: "Your data stays on your device",
+    privDataH: "Your account, meetings and contacts are stored locally in this browser. Clearing browser data deletes them.",
+    readPolicy: "Privacy Policy",
+    aiSub: "In-meeting helpers — they only run when you enable them",
+    aiTrT: "Live transcription", aiTrH: "Turns speech into text during the meeting using your browser's speech recognition.",
+    aiSumT: "Meeting summary", aiSumH: "Key points, action items and decisions pulled from the transcript.",
+    aiKeepT: "Keep transcripts after the meeting", aiKeepH: "When off, the transcript is deleted as soon as you leave.",
+    aiDisc: "Note: transcription and summaries can be inaccurate — review them before relying on them.",
+    blkSub: "They can't message you or invite you to meetings",
+    blkEmpty: "No blocked users", blkEmptySub: "Anyone you block will appear here.",
+    unblock: "Unblock", unblockTitle: "Unblock this user?", unblockMsg: "They'll be able to reach you again.",
+    unblocked: "User unblocked",
+    dngSub: "These actions can't be undone",
+    clrHistT: "Clear meeting history", clrHistH: "Removes every meeting from this device. The links keep working.",
+    clrHistTitle: "Clear your whole meeting history?", clrHistMsg: "You won't be able to get it back on this device.",
+    clrHistYes: "Clear all", histCleared: "Meeting history cleared",
+    delAccT: "Delete account", delAccH: "Permanently deletes your account and all data saved on this device.",
+    delAcc: "Delete account", deleting: "Deleting…",
+    delTitle: "Delete your account permanently?",
+    delMsg: "Your account, meetings, contacts and messages will be erased from this device. This can't be undone.",
+    delWord: "DELETE",
+    delLabel: 'Type "DELETE" to confirm',
+    errDelWord: 'You need to type "DELETE" exactly to continue',
+    cancel: "Cancel", close: "Close"
+  }
+};
+
+if (!Liqaa.boot({ dict: DICT, requireAuth: true, active: 'settings' })) await new Promise(() => {}); // requireAuth is navigating away — halt this module quietly
+
+const $ = (id) => document.getElementById(id);
+const T = (k, v) => Liqaa.t(k, v);
+
+function paintIcons() {
+  document.querySelectorAll('[data-icon]').forEach(el => { el.innerHTML = Liqaa.icon(el.getAttribute('data-icon')); });
+  document.querySelectorAll('.modal-close').forEach(b => { b.innerHTML = Liqaa.icon('close'); });
+  document.querySelectorAll('[data-eye]').forEach(b => {
+    const inp = $(b.getAttribute('data-eye'));
+    b.innerHTML = Liqaa.icon(inp && inp.type === 'text' ? 'eyeOff' : 'eye');
+  });
+}
+paintIcons();
+
+document.querySelectorAll('[data-eye]').forEach(b => {
+  b.addEventListener('click', () => {
+    const inp = $(b.getAttribute('data-eye'));
+    inp.type = inp.type === 'password' ? 'text' : 'password';
+    b.innerHTML = Liqaa.icon(inp.type === 'text' ? 'eyeOff' : 'eye');
+  });
+});
+
+/* ---------- section nav ---------- */
+const navBtns = Array.from(document.querySelectorAll('.set-nav button'));
+navBtns.forEach(b => {
+  b.addEventListener('click', () => {
+    const id = b.getAttribute('data-sec');
+    const el = $(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    history.replaceState(null, '', '#' + id);
+  });
+});
+const secs = navBtns.map(b => $(b.getAttribute('data-sec'))).filter(Boolean);
+const io = new IntersectionObserver((entries) => {
+  entries.forEach(en => {
+    if (!en.isIntersecting) return;
+    navBtns.forEach(b => b.classList.toggle('active', b.getAttribute('data-sec') === en.target.id));
+  });
+}, { rootMargin: '-25% 0px -65% 0px', threshold: 0 });
+secs.forEach(s => io.observe(s));
+if (location.hash) setTimeout(() => { const el = document.querySelector(location.hash); if (el) el.scrollIntoView({ block: 'start' }); }, 120);
+
+/* ---------- account ---------- */
+function loadAccount() {
+  const u = Liqaa.currentUser() || {};
+  const name = Liqaa.displayName(u);
+  $('profAvatar').innerHTML = u.avatar ? '<img src="' + Liqaa.escapeHtml(u.avatar) + '" alt="">' : Liqaa.escapeHtml(Liqaa.initials(name));
+  $('profName').textContent = name || '—';
+  $('profMail').textContent = u.email || '—';
+  $('acFirst').value = u.firstName || '';
+  $('acLast').value = u.lastName || '';
+  $('acUsername').value = u.username || '';
+  $('acEmail').value = u.email || '';
+}
+loadAccount();
+
+function showErr(el, msg) {
+  el.innerHTML = Liqaa.icon('alert') + '<span>' + Liqaa.escapeHtml(msg) + '</span>';
+  el.classList.add('show');
+}
+['acFirst', 'acLast', 'acUsername'].forEach(id => $(id).addEventListener('input', () => {
+  $(id).classList.remove('err'); $('accErr').classList.remove('show');
+}));
+$('acUsername').addEventListener('input', () => { $('acUsername').value = $('acUsername').value.toLowerCase().replace(/[^a-z0-9_]/g, ''); });
+$('photoEdit').innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+$('photoEdit').addEventListener('click', () => $('avatarInput').click());
+$('avatarInput').addEventListener('change', function () {
+  const file = this.files && this.files[0]; this.value = '';
+  if (!file) return;
+  if (!file.type.startsWith('image/') || file.size > 2 * 1024 * 1024) { Liqaa.toast(T('photoTooLarge'), 'error'); return; }
+  const reader = new FileReader();
+  reader.onload = () => { const img = new Image(); img.onload = () => { const max = 256, scale = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight)); const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.naturalWidth * scale)); c.height = Math.max(1, Math.round(img.naturalHeight * scale)); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); const avatar = c.toDataURL('image/jpeg', .82); const rec = getUserRecord() || {}; const next = Object.assign({}, rec, { email: (getSession() || {}).email, avatar: avatar }); saveUserRecord(next); if (window.LiqaaFirebaseAuth) window.LiqaaFirebaseAuth.saveProfile(next).catch(() => {}); loadAccount(); Liqaa.mountAppBar('settings'); Liqaa.toast(T('photoUpdated'), 'ok'); }; img.src = String(reader.result); };
+  reader.readAsDataURL(file);
+});
+
+$('accForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('accSave');
+  if (btn.disabled) return;
+  $('accErr').classList.remove('show');
+
+  const first = $('acFirst').value.trim();
+  const last = $('acLast').value.trim();
+  const uname = $('acUsername').value.trim().toLowerCase().replace(/^@/, '');
+  if (!first) { $('acFirst').classList.add('err'); showErr($('accErr'), T('errFirst')); $('acFirst').focus(); return; }
+  if (!/^[a-z0-9_]{3,24}$/.test(uname)) { $('acUsername').classList.add('err'); showErr($('accErr'), T('errUsername')); $('acUsername').focus(); return; }
+  const currentEmail = String((getSession() || {}).email || '').toLowerCase();
+  const currentRec = getUserRecord() || {};
+  if (uname !== String(currentRec.username || '').toLowerCase() && currentRec.usernameChangedAt && Date.now() - currentRec.usernameChangedAt < 7 * 24 * 60 * 60 * 1000) { $('acUsername').classList.add('err'); showErr($('accErr'), T('errUsernameWait')); return; }
+  const usernameTaken = getUsers().some(u => String(u.email || '').toLowerCase() !== currentEmail && String(u.username || '').toLowerCase() === uname);
+  if (usernameTaken) { $('acUsername').classList.add('err'); showErr($('accErr'), T('errUsernameTaken')); $('acUsername').focus(); return; }
+
+  Liqaa.setLoading(btn, true, T('saving'));
+  setTimeout(() => {
+    const s = getSession() || {};
+    const nextProfile = Object.assign({}, getUserRecord() || {}, {
+      email: s.email, firstName: first, lastName: last, username: uname,
+      usernameChangedAt: uname !== String((getUserRecord() || {}).username || '').toLowerCase() ? Date.now() : (getUserRecord() || {}).usernameChangedAt || 0
+    });
+    saveUserRecord(nextProfile);
+    if (window.LiqaaFirebaseAuth) window.LiqaaFirebaseAuth.saveProfile(nextProfile).catch(() => {});
+    Liqaa.setLoading(btn, false);
+    loadAccount();
+    Liqaa.mountAppBar('settings');
+    bindShellExtras();
+    Liqaa.toast(T('saved'), 'ok');
+  }, 500);
+});
+
+/* ---------- security ---------- */
+['pwOld', 'pwNew', 'pwConf'].forEach(id => $(id).addEventListener('input', () => {
+  $(id).classList.remove('err'); $('pwErr').classList.remove('show');
+}));
+function strongPw(p) { return p.length >= 8 && /[A-Z]/.test(p) && /[a-z]/.test(p) && /[0-9]/.test(p); }
+
+$('pwForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('pwSave');
+  if (btn.disabled) return;
+  $('pwErr').classList.remove('show');
+
+  const rec = getUserRecord() || {};
+  const oldV = $('pwOld').value, nv = $('pwNew').value, cv = $('pwConf').value;
+
+  if (rec.password) {
+    if (oldV !== rec.password) { $('pwOld').classList.add('err'); showErr($('pwErr'), T('errOldWrong')); return; }
+  }
+  if (!strongPw(nv)) { $('pwNew').classList.add('err'); showErr($('pwErr'), T('errWeak')); return; }
+  if (nv !== cv) { $('pwConf').classList.add('err'); showErr($('pwErr'), T('errMismatch')); return; }
+
+  Liqaa.setLoading(btn, true, T('changing'));
+  setTimeout(() => {
+    saveUserRecord(Object.assign({}, rec, { email: (getSession() || {}).email, password: nv }));
+    Liqaa.setLoading(btn, false);
+    $('pwForm').reset();
+    Liqaa.toast(T('pwDone'), 'ok');
+  }, 550);
+});
+$('logoutBtn2').addEventListener('click', () => Liqaa.logout());
+
+/* ---------- toggles ---------- */
+function loadToggles() {
+  const s = getSettings();
+  document.querySelectorAll('[data-set]').forEach(t => {
+    t.setAttribute('aria-checked', s[t.getAttribute('data-set')] ? 'true' : 'false');
+  });
+}
+document.querySelectorAll('[data-set]').forEach(t => {
+  t.addEventListener('click', () => {
+    const key = t.getAttribute('data-set');
+    const next = t.getAttribute('aria-checked') !== 'true';
+    t.setAttribute('aria-checked', next ? 'true' : 'false');
+    saveSettings({ [key]: next });
+    Liqaa.toast(T('saved'), 'ok', 1500);
+  });
+});
+loadToggles();
+
+/* ---------- devices ---------- */
+let testStream = null, audioCtx = null, rafId = 0;
+
+async function loadDevices() {
+  const s = getSettings();
+  const d = await Liqaa.listDevices();
+  Liqaa.fillDeviceSelect($('camSel'), d.cams, s.devices.camera, T('camera'));
+  Liqaa.fillDeviceSelect($('micSel'), d.mics, s.devices.mic, T('microphone'));
+  Liqaa.fillDeviceSelect($('spkSel'), d.speakers, s.devices.speaker, T('speaker'));
+  const canPickSpk = 'setSinkId' in HTMLMediaElement.prototype;
+  $('spkSel').disabled = !canPickSpk || !d.speakers.length;
+  $('spkHint').hidden = canPickSpk;
+}
+loadDevices();
+
+[['camSel', 'camera'], ['micSel', 'mic'], ['spkSel', 'speaker']].forEach(([id, key]) => {
+  $(id).addEventListener('change', () => {
+    const s = getSettings();
+    saveSettings({ devices: Object.assign({}, s.devices, { [key]: $(id).value }) });
+    Liqaa.toast(T('saved'), 'ok', 1500);
+    if (testStream && key !== 'speaker') startTest();
+  });
+});
+
+function stopTest() {
+  if (rafId) cancelAnimationFrame(rafId), rafId = 0;
+  if (audioCtx) { try { audioCtx.close(); } catch (e) {} audioCtx = null; }
+  if (testStream) { testStream.getTracks().forEach(t => t.stop()); testStream = null; }
+  $('prevVideo').srcObject = null;
+  $('testArea').hidden = true;
+  $('stopTestBtn').hidden = true;
+  $('testBtn').hidden = false;
+  $('lvlBar').style.width = '0%';
+}
+
+async function startTest() {
+  $('avErr').classList.remove('show');
+  const s = getSettings();
+  const btn = $('testBtn');
+  Liqaa.setLoading(btn, true, T('testDevices'));
+  try {
+    if (testStream) testStream.getTracks().forEach(t => t.stop());
+    testStream = await navigator.mediaDevices.getUserMedia({
+      video: s.devices.camera ? { deviceId: { ideal: s.devices.camera } } : true,
+      audio: s.devices.mic ? { deviceId: { ideal: s.devices.mic } } : true
+    });
+    $('prevVideo').srcObject = testStream;
+    $('testArea').hidden = false;
+    $('stopTestBtn').hidden = false;
+    btn.hidden = true;
+
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(testStream);
+    const an = audioCtx.createAnalyser();
+    an.fftSize = 512;
+    src.connect(an);
+    const data = new Uint8Array(an.frequencyBinCount);
+    const tick = () => {
+      an.getByteTimeDomainData(data);
+      let peak = 0;
+      for (let i = 0; i < data.length; i++) peak = Math.max(peak, Math.abs(data[i] - 128));
+      $('lvlBar').style.width = Math.min(100, (peak / 60) * 100).toFixed(0) + '%';
+      rafId = requestAnimationFrame(tick);
+    };
+    tick();
+    loadDevices();
+  } catch (err) {
+    showErr($('avErr'), Liqaa.mediaErrorMessage(err));
+  } finally {
+    Liqaa.setLoading(btn, false);
+  }
+}
+$('testBtn').addEventListener('click', startTest);
+$('stopTestBtn').addEventListener('click', stopTest);
+window.addEventListener('pagehide', stopTest);
+
+/* ---------- notifications ---------- */
+$('clearNotifs').addEventListener('click', () => {
+  clearNotifications();
+  Liqaa.renderNotifList();
+  Liqaa.toast(T('notifsCleared'), 'ok');
+});
+
+/* ---------- blocked ---------- */
+function renderBlocked() {
+  const list = getBlocked();
+  const host = $('blkList'), card = $('blkCard');
+  if (!list.length) {
+    card.classList.remove('flush');
+    host.innerHTML = '<div class="empty"><span class="empty-art">' + Liqaa.icon('ban') + '</span>' +
+      '<h3>' + Liqaa.escapeHtml(T('blkEmpty')) + '</h3><p>' + Liqaa.escapeHtml(T('blkEmptySub')) + '</p></div>';
+    return;
+  }
+  card.classList.add('flush');
+  host.innerHTML = list.map(b =>
+    '<div class="mtg-row" data-user="' + Liqaa.escapeHtml(b.username) + '">' +
+      '<span class="mtg-thumb">' + Liqaa.escapeHtml(Liqaa.initials(b.name || b.username)) + '</span>' +
+      '<span class="mtg-info"><span style="font-weight:800">' + Liqaa.escapeHtml(b.name || b.username) + '</span>' +
+      '<span class="mtg-meta" dir="ltr">@' + Liqaa.escapeHtml(b.username) + '</span></span>' +
+      '<span class="mtg-actions"><button class="btn btn-secondary btn-sm" type="button" data-unblock>' +
+        Liqaa.escapeHtml(T('unblock')) + '</button></span></div>').join('');
+  host.querySelectorAll('[data-unblock]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const u = btn.closest('.mtg-row').getAttribute('data-user');
+      const ok = await Liqaa.confirm({ title: T('unblockTitle'), message: T('unblockMsg'), confirmText: T('unblock'), cancelText: T('cancel') });
+      if (ok) { unblockUser(u); renderBlocked(); Liqaa.toast(T('unblocked'), 'ok'); }
+    });
+  });
+}
+renderBlocked();
+
+/* ---------- danger zone ---------- */
+$('clearMeetings').addEventListener('click', async () => {
+  const ok = await Liqaa.confirm({
+    title: T('clrHistTitle'), message: T('clrHistMsg'),
+    confirmText: T('clrHistYes'), cancelText: T('cancel'), danger: true
+  });
+  if (ok) { saveMeetings([]); Liqaa.toast(T('histCleared'), 'ok'); }
+});
+
+function paintDelModal() {
+  $('delLabel').textContent = T('delLabel');
+  $('delConfirm').placeholder = T('delWord');
+}
+$('delAccBtn').addEventListener('click', () => {
+  $('delForm').reset();
+  $('delErr').classList.remove('show');
+  $('delConfirm').classList.remove('err');
+  paintDelModal();
+  Liqaa.openModal($('delModal'));
+});
+$('delConfirm').addEventListener('input', () => { $('delConfirm').classList.remove('err'); $('delErr').classList.remove('show'); });
+
+$('delForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const btn = $('delGo');
+  if (btn.disabled) return;
+  const want = T('delWord');
+  if ($('delConfirm').value.trim().toUpperCase() !== want.toUpperCase()) {
+    $('delConfirm').classList.add('err');
+    showErr($('delErr'), T('errDelWord'));
+    return;
+  }
+  Liqaa.setLoading(btn, true, T('deleting'));
+  setTimeout(() => {
+    const s = getSession() || {};
+    const email = String(s.email || '').toLowerCase();
+    setUsers(getUsers().filter(u => String(u.email || '').toLowerCase() !== email));
+    ['liqaa_session', 'liqaa_friends', 'liqaa_rooms', 'liqaa_notifications', 'liqaa_blocked',
+     'liqaa_reports', 'liqaa_settings', 'liqaa_recordings', 'liqaa_search_history'].forEach(k => {
+      try { localStorage.removeItem(k); } catch (err) {}
+    });
+    try {
+      Object.keys(localStorage).forEach(k => {
+        if (k.indexOf('liqaa_chat:') === 0 || k.indexOf('liqaa_code_') === 0 || k.indexOf('liqaa_reset_') === 0) localStorage.removeItem(k);
+      });
+    } catch (err) {}
+    location.replace('index.html');
+  }, 700);
+});
+
+/* ---------- shell extras rebind after appbar remount ---------- */
+function bindShellExtras() { /* mountAppBar rewires its own handlers */ }
+
+document.addEventListener('liqaa:lang', () => {
+  paintIcons();
+  loadAccount();
+  renderBlocked();
+  loadDevices();
+  paintDelModal();
+});
+</script>
+</body>
+</html>

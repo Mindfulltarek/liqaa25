@@ -1,0 +1,12 @@
+import { json, parseCookies, clearCookie, STATE_COOKIE, requireDB, createSession, cookie, SESSION_COOKIE, SESSION_SECONDS } from '../_utils';
+export async function onRequestGet({request,env}) { try {
+ const url=new URL(request.url), code=url.searchParams.get('code'), state=url.searchParams.get('state');
+ if(!code || !state || state!==parseCookies(request)[STATE_COOKIE]) return json({error:'INVALID_OAUTH_STATE'},400,{'Set-Cookie':clearCookie(STATE_COOKIE)});
+ if(!env.GOOGLE_CLIENT_ID||!env.GOOGLE_CLIENT_SECRET||!env.GOOGLE_REDIRECT_URI) return json({error:'GOOGLE_OAUTH_NOT_CONFIGURED'},500);
+ const token=await fetch('https://oauth2.googleapis.com/token',{method:'POST',headers:{'content-type':'application/x-www-form-urlencoded'},body:new URLSearchParams({code,client_id:env.GOOGLE_CLIENT_ID,client_secret:env.GOOGLE_CLIENT_SECRET,redirect_uri:env.GOOGLE_REDIRECT_URI,grant_type:'authorization_code'})}).then(r=>r.ok?r.json():Promise.reject(new Error('Google token exchange failed')));
+ const google=await fetch('https://openidconnect.googleapis.com/v1/userinfo',{headers:{authorization:`Bearer ${token.access_token}`}}).then(r=>r.ok?r.json():Promise.reject(new Error('Google userinfo failed')));
+ if(!google.sub||!google.email||!google.email_verified) return json({error:'GOOGLE_EMAIL_NOT_VERIFIED'},403);
+ const db=requireDB(env); let account=await db.prepare('SELECT user_id FROM accounts WHERE provider=? AND provider_account_id=?').bind('google',google.sub).first(); let userId;
+ if(account) userId=account.user_id; else { let user=await db.prepare('SELECT id FROM users WHERE email=?').bind(String(google.email).toLowerCase()).first(); userId=user?user.id:crypto.randomUUID(); if(!user) await db.prepare('INSERT INTO users (id,email,name,profile_image,email_verified) VALUES (?,?,?,?,1)').bind(userId,String(google.email).toLowerCase(),String(google.name||'').slice(0,100),String(google.picture||'').slice(0,2048)).run(); await db.prepare('INSERT INTO accounts (id,user_id,provider,provider_account_id) VALUES (?,?,?,?)').bind(crypto.randomUUID(),userId,'google',google.sub).run(); }
+ const session=await createSession(env,userId); const origin=url.origin; const headers=new Headers({Location:origin+'/dashboard.html'}); headers.append('Set-Cookie',clearCookie(STATE_COOKIE)); headers.append('Set-Cookie',cookie(SESSION_COOKIE,session.id,SESSION_SECONDS)); return new Response(null,{status:302,headers});
+ } catch(e){console.error(e);return json({error:'GOOGLE_LOGIN_FAILED'},500);} }

@@ -1,0 +1,2 @@
+import { json, requireDB, parseCookies, clearCookie, SESSION_COOKIE } from './_utils';
+export async function onRequestPost({request,env}) { try { const id=parseCookies(request)[SESSION_COOKIE]; if(id) await requireDB(env).prepare('DELETE FROM sessions WHERE id=?').bind(id).run(); return json({ok:true},200,{'Set-Cookie':clearCookie(SESSION_COOKIE)}); } catch(e){console.error(e);return json({error:'SERVER_ERROR'},500);} }

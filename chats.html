@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>المحادثات — لقاء</title>
+<link rel="icon" href="liqaa-logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/liqaa-ui.css">
+<script>(function(){try{var t=localStorage.getItem('lm-theme');if(t&&t.indexOf('light')>-1)document.documentElement.classList.add('light');var l=localStorage.getItem('lm-lang');var en=l&&l.indexOf('en')>-1;document.documentElement.lang=en?'en':'ar';document.documentElement.dir=en?'ltr':'rtl';}catch(e){}})();</script>
+<style>
+  .chats-page { max-width: 780px; }
+  .chats-top { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .chats-top h1 { font-size:clamp(26px,3.4vw,34px); font-weight:900; }
+  .chat-search { position:relative; margin-bottom:14px; }
+  .chat-search svg { position:absolute; inset-inline-start:14px; top:50%; transform:translateY(-50%); width:19px; color:var(--faint); pointer-events:none; }
+  .chat-search .input { padding-inline-start:46px; }
+  .conversation { display:flex; align-items:center; gap:13px; width:100%; padding:14px 16px; text-decoration:none; color:var(--text); text-align:start; transition:background var(--t-fast) var(--ease); }
+  .conversation:hover { background:var(--glass); }
+  .conversation + .conversation { border-top:1px solid var(--border); }
+  .conversation .avatar { width:46px; height:46px; }
+  .conversation-body { min-width:0; flex:1; display:grid; gap:2px; }
+  .conversation-name { font-weight:800; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .conversation-preview { color:var(--muted); font-size:13.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .conversation-meta { align-self:stretch; display:flex; flex-direction:column; align-items:flex-end; justify-content:space-between; gap:5px; }
+  .conversation-time { color:var(--faint); font-size:11.5px; direction:ltr; }
+  .delete-chat { width:32px; height:32px; opacity:0; color:var(--faint); }
+  .conversation:hover .delete-chat, .delete-chat:focus-visible { opacity:1; }
+  .delete-chat:hover { color:var(--danger); background:var(--danger-bg); }
+  .empty-chat-list { text-align:center; padding:54px 20px; color:var(--muted); }
+  .empty-chat-list .empty-art { margin:0 auto 12px; }
+  .new-chat-list { display:grid; gap:6px; max-height:360px; overflow:auto; }
+  .new-chat-person { display:flex; align-items:center; gap:12px; width:100%; text-align:start; padding:11px; border-radius:var(--r-md); }
+  .new-chat-person:hover { background:var(--glass); }
+  .new-chat-person .person-text { flex:1; min-width:0; display:grid; }
+  .new-chat-person small { color:var(--muted); direction:ltr; text-align:start; }
+  @media(max-width:640px){.chats-top{align-items:flex-start}.delete-chat{opacity:1}.conversation{padding:13px}.conversation-meta{gap:2px}}
+</style>
+</head>
+<body class="app">
+<div id="appShell"></div>
+<main id="main"><div class="container chats-page page">
+  <div class="chats-top"><div><h1 data-i18n="title">المحادثات</h1><p class="muted" data-i18n="subtitle">رسائلك الخاصة في مكان واحد</p></div><button class="btn btn-primary" type="button" id="newChatBtn"><span data-icon="plus"></span><span data-i18n="newChat">محادثة جديدة</span></button></div>
+  <div class="chat-search"><span data-icon="search"></span><input class="input" id="chatSearch" data-i18n-ph="searchPh" placeholder="ابحث في المحادثات" autocomplete="off"></div>
+  <section class="card flush" id="chatList"></section>
+</div></main>
+<div class="modal-scrim" id="newChatModal" role="dialog" aria-modal="true" aria-labelledby="newChatTitle"><div class="modal"><div class="modal-head"><div class="mt"><h2 id="newChatTitle" data-i18n="newChat">محادثة جديدة</h2><p data-i18n="newChatSub">اختر شخصًا لبدء المحادثة</p></div><button class="modal-close" type="button" data-close></button></div><div class="modal-body"><div class="chat-search" style="margin:0"><span data-icon="search"></span><input class="input" id="peopleSearch" data-i18n-ph="peopleSearchPh" placeholder="ابحث في جهات الاتصال"></div><div class="new-chat-list" id="peopleList"></div></div></div></div>
+<script src="assets/server-auth.js"></script>
+<script src="assets/liqaa-ui.js"></script>
+<script type="module">
+import { getFriends, getChatHistory, saveChatHistory, myUsername } from './liqaa-core.js';
+const DICT={ar:{docTitle:'المحادثات — لقاء',title:'المحادثات',subtitle:'رسائلك الخاصة في مكان واحد',newChat:'محادثة جديدة',newChatSub:'اختر شخصًا لبدء المحادثة',searchPh:'ابحث في المحادثات',peopleSearchPh:'ابحث في جهات الاتصال',noChats:'لا توجد محادثات بعد',noChatsSub:'ابدأ محادثة جديدة مع أحد جهات اتصالك.',noPeople:'لا توجد جهات اتصال مطابقة',addContacts:'إضافة جهات اتصال',deleteTitle:'حذف هذه المحادثة؟',deleteMsg:'سيتم حذف الرسائل المحفوظة لهذه المحادثة من هذا الجهاز.',deleteYes:'حذف',deleted:'تم حذف المحادثة',emptyPreview:'ابدأ المحادثة الآن',cancel:'إلغاء',back:'رجوع'},en:{docTitle:'Chats — Liqaa',title:'Chats',subtitle:'Your private messages in one place',newChat:'New chat',newChatSub:'Choose a person to start chatting',searchPh:'Search chats',peopleSearchPh:'Search contacts',noChats:'No chats yet',noChatsSub:'Start a new chat with one of your contacts.',noPeople:'No matching contacts',addContacts:'Add contacts',deleteTitle:'Delete this chat?',deleteMsg:'Saved messages for this chat will be removed from this device.',deleteYes:'Delete',deleted:'Chat deleted',emptyPreview:'Start the conversation now',cancel:'Cancel',back:'Back'}};
+if(!Liqaa.boot({dict:DICT,requireAuth:true,active:'contacts'})) await new Promise(()=>{});
+const $=id=>document.getElementById(id),T=k=>Liqaa.t(k),me=myUsername();
+function icon(el,n){el.innerHTML=Liqaa.icon(n)}
+document.querySelectorAll('[data-icon]').forEach(x=>icon(x,x.dataset.icon)); document.querySelectorAll('.modal-close').forEach(x=>icon(x,'close'));
+function when(m){return m&&m.time?m.time:''} function contacts(){return getFriends().filter(f=>f&&f.username)}
+function conversations(){return contacts().map(f=>{const h=getChatHistory(me,f.username);return {f,h,last:h[h.length-1]||null}}).filter(x=>x.h.length).sort((a,b)=>(b.last&&b.last.at||0)-(a.last&&a.last.at||0));}
+function preview(last){if(!last)return T('emptyPreview'); if(last.kind==='file')return Liqaa.lang()==='ar'?'📎 ملف':'📎 File'; return last.text||T('emptyPreview')}
+function renderChats(){const q=$('chatSearch').value.trim().toLowerCase();const list=conversations().filter(x=>!q||(x.f.name||'').toLowerCase().includes(q)||x.f.username.toLowerCase().includes(q));const host=$('chatList');if(!list.length){host.classList.remove('flush');host.innerHTML='<div class="empty-chat-list"><span class="empty-art">'+Liqaa.icon('chat')+'</span><h3>'+Liqaa.escapeHtml(T('noChats'))+'</h3><p>'+Liqaa.escapeHtml(T('noChatsSub'))+'</p><button class="btn btn-primary" type="button" id="emptyNew">'+Liqaa.icon('plus')+'<span>'+Liqaa.escapeHtml(T('newChat'))+'</span></button><a class="btn btn-ghost" href="contacts.html">'+Liqaa.escapeHtml(T('addContacts'))+'</a></div>'; $('emptyNew').onclick=openNew;return}host.classList.add('flush');host.innerHTML=list.map(x=>{const f=x.f,last=x.last;return '<a class="conversation" href="chat.html?u='+encodeURIComponent(f.username)+'"><span class="avatar">'+Liqaa.escapeHtml(Liqaa.initials(f.name||f.username))+'</span><span class="conversation-body"><span class="conversation-name">'+Liqaa.escapeHtml(f.name||f.username)+'</span><span class="conversation-preview">'+Liqaa.escapeHtml(preview(last))+'</span></span><span class="conversation-meta"><span class="conversation-time">'+Liqaa.escapeHtml(when(last))+'</span><button class="icon-btn delete-chat" type="button" data-delete="'+Liqaa.escapeHtml(f.username)+'" aria-label="Delete">'+Liqaa.icon('trash')+'</button></span></a>'}).join('');host.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async e=>{e.preventDefault();e.stopPropagation();const ok=await Liqaa.confirm({title:T('deleteTitle'),message:T('deleteMsg'),confirmText:T('deleteYes'),cancelText:T('cancel'),danger:true});if(ok){saveChatHistory(me,b.dataset.delete,[]);renderChats();Liqaa.toast(T('deleted'),'ok')}})}
+function renderPeople(){const q=$('peopleSearch').value.trim().toLowerCase();const ps=contacts().filter(f=>!q||(f.name||'').toLowerCase().includes(q)||f.username.toLowerCase().includes(q));$('peopleList').innerHTML=ps.length?ps.map(f=>'<button class="new-chat-person" type="button" data-user="'+Liqaa.escapeHtml(f.username)+'"><span class="avatar sm">'+Liqaa.escapeHtml(Liqaa.initials(f.name||f.username))+'</span><span class="person-text"><b>'+Liqaa.escapeHtml(f.name||f.username)+'</b><small>@'+Liqaa.escapeHtml(f.username)+'</small></span>'+Liqaa.icon(Liqaa.lang()==='ar'?'arrowLeft':'arrowRight')+'</button>').join(''):'<div class="empty-chat-list">'+Liqaa.escapeHtml(T('noPeople'))+'</div>'; $('peopleList').querySelectorAll('[data-user]').forEach(b=>b.onclick=()=>location.href='chat.html?u='+encodeURIComponent(b.dataset.user))}
+function openNew(){ $('peopleSearch').value='';renderPeople();Liqaa.openModal('newChatModal')}
+$('newChatBtn').onclick=openNew;$('chatSearch').oninput=renderChats;$('peopleSearch').oninput=renderPeople;document.addEventListener('liqaa:lang',()=>{renderChats();renderPeople();document.querySelectorAll('[data-icon]').forEach(x=>icon(x,x.dataset.icon));});renderChats();
+</script></body></html>
